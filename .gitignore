@@ -1,0 +1,34 @@
+# Local Development AI assistant related files.
+prompts/*
+.claude
+.clinerules
+nul
+./nul
+
+# Secrets — never commit
+.env
+*.env.local
+
+# Go
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local Notes
+mynotes.txt
