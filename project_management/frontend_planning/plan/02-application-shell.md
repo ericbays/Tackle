@@ -257,6 +257,8 @@ Dashboard  /  Campaigns  /  Operation Sunrise  /  Targets
 
 ## 5. Global Search (Command Palette)
 
+The Command Palette is powered by the **`cmdk`** library for rapid, accessible, keyboard-first navigation—a critical feature for power users.
+
 ### 5.1 Activation
 
 - Click the search trigger in the top bar.
@@ -293,6 +295,7 @@ Dashboard  /  Campaigns  /  Operation Sunrise  /  Targets
 ### 5.3 Behavior
 
 - **Debounce**: 300ms after the user stops typing before sending the search query.
+- **cmdK Engine**: Uses `cmdk` built-in filtering or asynchronous filtering for server-side search results. Visuals include a glassmorphism backdrop blur on the overlay to emphasize depth.
 - **API endpoint**: `GET /api/v1/search?q={query}`.
 - **Results grouping**: Results are categorized by entity type (Campaigns, Targets, Templates, Domains, Users) with a type badge next to each result.
 - **Result display**: Each result shows the entity name, a type badge, and a status indicator (for campaigns: status badge color).

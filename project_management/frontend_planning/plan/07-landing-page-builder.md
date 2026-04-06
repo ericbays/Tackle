@@ -1,6 +1,10 @@
 # 07 — Landing Page Builder
 
-This document specifies the Landing Page Builder: a full-screen, visual, drag-and-drop web page builder that enables operators to create phishing landing pages for Tackle campaigns. The builder is the centerpiece of the platform and the most complex frontend feature. It provides Webflow-inspired editing with an iframe-based canvas, icon toolbar with flyout panels, a right-side property editor, a bottom code editor panel, multi-page management, responsive breakpoints, a form builder with field categorization, template galleries, HTML import, and a full preview mode.
+This document specifies the Landing Page Builder: a full-screen, visual, drag-and-drop web page builder that enables operators to create phishing landing pages for Tackle campaigns. 
+
+**Technology Standard:** Rather than using heavy third-party drag-and-drop website builders (like GrapesJS or Craft.js), this builder is built entirely bespoke using **`@dnd-kit/core`** as the drag-and-drop physics engine. This ensures the builder remains incredibly lightweight, directly integrates with our React component tree and TanStack state, and avoids iframe-heavy framework-bloat.
+
+The builder is the centerpiece of the platform and the most complex frontend feature. It provides Webflow-inspired editing with an iframe-based canvas, icon toolbar with flyout panels, a right-side property editor, a bottom code editor panel, multi-page management, responsive breakpoints, a form builder with field categorization, template galleries, HTML import, and a full preview mode.
 
 This document is the definitive reference for implementation. Every interaction, edge case, animation timing, keyboard shortcut, and API call is specified below.
 
@@ -364,6 +368,8 @@ The active toolbar button receives:
 ---
 
 ## 6. Drag and Drop
+
+The entire drag and drop system is orchestrated via `@dnd-kit/core`, utilizing custom sensors, collision detection algorithms, and DragOverlay for ghost images.
 
 ### 6.1 Drag Sources
 

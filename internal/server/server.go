@@ -867,23 +867,23 @@ func buildRouter(cfg *config.Config, db *sql.DB, masterKey []byte, logger *slog.
 			r.With(writeRL, requirePerm("infrastructure:read")).Post("/campaigns/{id}/smtp-profiles/validate", smtpDeps.ValidateCampaignProfiles)
 
 			// Email template endpoints (Phase 2 - Infrastructure Track).
-			r.With(readRL, requirePerm("campaigns:read")).Get("/email-templates", etDeps.ListTemplates)
-			r.With(writeRL, bodySizeMW(bodySizeStandard), requirePerm("campaigns:create")).Post("/email-templates", etDeps.CreateTemplate)
-			r.With(readRL, requirePerm("campaigns:read")).Get("/email-templates/{id}", etDeps.GetTemplate)
-			r.With(writeRL, bodySizeMW(bodySizeStandard), requirePerm("campaigns:update")).Put("/email-templates/{id}", etDeps.UpdateTemplate)
-			r.With(writeRL, requirePerm("campaigns:delete")).Delete("/email-templates/{id}", etDeps.DeleteTemplate)
-			r.With(writeRL, bodySizeMW(bodySizeStandard), requirePerm("campaigns:create")).Post("/email-templates/{id}/clone", etDeps.CloneTemplate)
-			r.With(writeRL, bodySizeMW(bodySizeStandard), requirePerm("campaigns:read")).Post("/email-templates/{id}/preview", etDeps.PreviewTemplate)
-			r.With(writeRL, requirePerm("campaigns:read")).Post("/email-templates/{id}/validate", etDeps.ValidateTemplate)
-			r.With(readRL, requirePerm("campaigns:read")).Get("/email-templates/{id}/versions", etDeps.ListVersions)
-			r.With(readRL, requirePerm("campaigns:read")).Get("/email-templates/{id}/versions/{version}", etDeps.GetVersion)
-			r.With(readRL, requirePerm("campaigns:read")).Get("/email-templates/{id}/export", etDeps.ExportTemplate)
-			r.With(writeRL, bodySizeMW(bodySizeStandard), requirePerm("campaigns:create")).Post("/email-templates/{id}/send-test", etDeps.SendTestEmail)
+			r.With(readRL, requirePerm("templates.email:read")).Get("/email-templates", etDeps.ListTemplates)
+			r.With(writeRL, bodySizeMW(bodySizeStandard), requirePerm("templates.email:create")).Post("/email-templates", etDeps.CreateTemplate)
+			r.With(readRL, requirePerm("templates.email:read")).Get("/email-templates/{id}", etDeps.GetTemplate)
+			r.With(writeRL, bodySizeMW(bodySizeStandard), requirePerm("templates.email:update")).Put("/email-templates/{id}", etDeps.UpdateTemplate)
+			r.With(writeRL, requirePerm("templates.email:delete")).Delete("/email-templates/{id}", etDeps.DeleteTemplate)
+			r.With(writeRL, bodySizeMW(bodySizeStandard), requirePerm("templates.email:create")).Post("/email-templates/{id}/clone", etDeps.CloneTemplate)
+			r.With(writeRL, bodySizeMW(bodySizeStandard), requirePerm("templates.email:read")).Post("/email-templates/{id}/preview", etDeps.PreviewTemplate)
+			r.With(writeRL, requirePerm("templates.email:read")).Post("/email-templates/{id}/validate", etDeps.ValidateTemplate)
+			r.With(readRL, requirePerm("templates.email:read")).Get("/email-templates/{id}/versions", etDeps.ListVersions)
+			r.With(readRL, requirePerm("templates.email:read")).Get("/email-templates/{id}/versions/{version}", etDeps.GetVersion)
+			r.With(readRL, requirePerm("templates.email:export")).Get("/email-templates/{id}/export", etDeps.ExportTemplate)
+			r.With(writeRL, bodySizeMW(bodySizeStandard), requirePerm("templates.email:create")).Post("/email-templates/{id}/send-test", etDeps.SendTestEmail)
 
 			// Email template attachments.
-			r.With(readRL, requirePerm("campaigns:read")).Get("/email-templates/{id}/attachments", etDeps.ListAttachments)
-			r.With(writeRL, bodySizeMW(12<<20), requirePerm("campaigns:create")).Post("/email-templates/{id}/attachments", etDeps.UploadAttachment)
-			r.With(writeRL, requirePerm("campaigns:delete")).Delete("/email-templates/{id}/attachments/{aid}", etDeps.DeleteAttachment)
+			r.With(readRL, requirePerm("templates.email:read")).Get("/email-templates/{id}/attachments", etDeps.ListAttachments)
+			r.With(writeRL, bodySizeMW(12<<20), requirePerm("templates.email:update")).Post("/email-templates/{id}/attachments", etDeps.UploadAttachment)
+			r.With(writeRL, requirePerm("templates.email:update")).Delete("/email-templates/{id}/attachments/{aid}", etDeps.DeleteAttachment)
 
 			// Target endpoints (Phase 3 - Campaign Engine).
 			r.With(readRL, requirePerm("targets:read")).Get("/targets", targetDeps.ListTargets)

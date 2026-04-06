@@ -2,6 +2,11 @@
 
 This document defines the visual design language for the Tackle admin UI. Every component, page, and interaction in the application adheres to these specifications. The design system is built around the Tackle brand identity — a dark, professional aesthetic derived from the logo's slate blue and navy palette with steel blue accents.
 
+## Technology Stack Principles
+- **Styling Utility**: Tailwind CSS is the absolute source of truth for styling. We avoid raw CSS and prioritize Tailwind utility classes for rapid, maintainable design.
+- **Micro-Interactions**: Framer Motion powers all complex layout transitions, modal appearances, and micro-animations (spring physics).
+- **Aesthetic Vibe**: Glassmorphism (using backdrop blurs), ambient light glows behind critical elements, and layered gradient borders to upgrade the flat UI to a premium hacker/security tool feel.
+
 ---
 
 ## 1. Color Palette
@@ -164,7 +169,9 @@ All spacing uses a **4px base unit** (`0.25rem`). Every margin, padding, and gap
 
 ## 6. Animation and Transitions
 
-### 6.1 Timing
+All animations are powered by **Framer Motion** to ensure buttery-smooth physics-based interactions that feel tangibly alive.
+
+### 6.1 Timing (Framer Motion Defaults)
 
 | Token | Value | Usage |
 |-------|-------|-------|
@@ -182,9 +189,9 @@ All spacing uses a **4px base unit** (`0.25rem`). Every margin, padding, and gap
 | `--ease-in-out` | `cubic-bezier(0.45, 0, 0.55, 1)` | Elements repositioning (sidebar collapse, accordion) |
 | `--ease-spring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Playful interactions (drag snap, badge pop) |
 
-### 6.3 Transition Behaviors
+### 6.3 Transition Behaviors (Framer Motion)
 
-- **Modals**: Fade in background overlay (`--duration-smooth`), scale up from 95% to 100% + fade in content (`--duration-smooth`, `--ease-out`).
+- **Modals**: Framer Motion `AnimatePresence`. Fade in backdrop, scale from 95% to 100% with spring physics (`type: spring, bounce: 0.3`).
 - **Slide-over panels**: Slide in from the right edge (`--duration-smooth`, `--ease-out`). Background overlay fades in simultaneously.
 - **Sidebar collapse**: Width transition (`--duration-smooth`, `--ease-in-out`). Text labels fade out before width animates. Icons remain stationary.
 - **Toasts**: Slide in from the right + fade in (`--duration-normal`, `--ease-out`). Slide out + fade out on dismiss.

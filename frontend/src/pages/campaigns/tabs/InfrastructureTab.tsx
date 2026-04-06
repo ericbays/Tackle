@@ -1,0 +1,128 @@
+import { Cloud, Server, Globe, ShieldCheck } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { useCampaignStore } from '../../../store/campaignStore';
+import { useCloudCredentials, useDomains } from '../../../hooks/useConfigurations';
+
+export default function InfrastructureTab() {
+    const { id } = useParams();
+    const { draft: { infrastructure }, updateInfrastructure, isSaving, saveCampaign } = useCampaignStore();
+
+    const { data: cloudCredentials = [], isLoading: isLoadingCreds } = useCloudCredentials();
+    const { data: domains = [], isLoading: isLoadingDomains } = useDomains();
+
+    return (
+        <div className="space-y-8">
+            <section className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                <div className="p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <Cloud className="w-5 h-5 text-blue-400" />
+                        <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">Cloud Host Selection</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Provider Profile</label>
+                            {isLoadingCreds ? (
+                                <div className="text-slate-500 text-sm py-2">Loading configured providers...</div>
+                            ) : (
+                                <select 
+                                    value={infrastructure.provider}
+                                    onChange={(e) => updateInfrastructure({ provider: e.target.value })}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                                >
+                                    <option value="">Select a configured provider...</option>
+                                    {cloudCredentials.map((cred) => (
+                                        <option key={cred.id} value={cred.provider_type}>
+                                            {cred.display_name} ({cred.provider_type})
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Region</label>
+                            <select 
+                                value={infrastructure.region}
+                                onChange={(e) => updateInfrastructure({ region: e.target.value })}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                            >
+                                <option>us-east-1 (N. Virginia)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Instance Size</label>
+                            <select 
+                                value={infrastructure.instanceSize}
+                                onChange={(e) => updateInfrastructure({ instanceSize: e.target.value })}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                            >
+                                <option>t3.micro</option>
+                            </select>
+                            <p className="mt-2 text-xs text-slate-500">Recommended for your 75 targets</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                <div className="p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <Globe className="w-5 h-5 text-emerald-400" />
+                        <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">Endpoint Config</h2>
+                    </div>
+
+                    <div className="max-w-md space-y-6">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Phishing Domain</label>
+                            {isLoadingDomains ? (
+                                <div className="text-slate-500 text-sm py-2">Loading configured domains...</div>
+                            ) : (
+                                <select 
+                                    value={infrastructure.domain}
+                                    onChange={(e) => updateInfrastructure({ domain: e.target.value })}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                                >
+                                    <option value="">Select a registered domain...</option>
+                                    {domains.map((domain) => (
+                                        <option key={domain.id} value={domain.domain_name}>
+                                            {domain.domain_name}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                            <p className="mt-2 text-xs text-slate-500">Must be pre-registered via Tackle</p>
+                        </div>
+
+                        <div className="flex items-start gap-3 bg-slate-950/50 p-4 rounded-lg border border-slate-800">
+                            <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                            <div>
+                                <h3 className="text-sm font-medium text-slate-300">Auto TLS Provisioning</h3>
+                                <p className="text-xs text-slate-500 mt-1">We will automatically provision SSL certs for this domain via Let's Encrypt upon launch.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section className="border border-dashed border-slate-800 rounded-xl overflow-hidden flex items-center justify-center py-12 px-6">
+                <div className="text-center max-w-md">
+                    <Server className="w-8 h-8 text-slate-600 mx-auto mb-4" />
+                    <h3 className="text-sm font-semibold text-slate-400 mb-2">Offline</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                        Server telemetry and status indicators will appear here once the campaign builds and dynamically deploys backend targets.
+                    </p>
+                </div>
+            </section>
+
+            <div className="flex justify-end pt-4">
+                <button 
+                    onClick={() => saveCampaign(id)}
+                    disabled={isSaving}
+                    className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-md font-medium transition-colors"
+                >
+                    {isSaving ? 'Saving...' : 'Save Infrastructure'}
+                </button>
+            </div>
+        </div>
+    );
+}

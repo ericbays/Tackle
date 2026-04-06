@@ -72,6 +72,8 @@ Four stat cards span the top of the dashboard in a 4-column grid (stack to 2x2 o
 
 ### 1.4 Charts
 
+All charts are implemented using **Visx** or **Apache ECharts** to provide highly dynamic, interactive, and beautifully animated data visualizations rather than static, basic charts.
+
 **Captures Over Time (Line Chart):**
 - X-axis: time (hourly granularity for 7d, daily for 30d).
 - Y-axis: capture count.
@@ -93,7 +95,7 @@ Four stat cards span the top of the dashboard in a 4-column grid (stack to 2x2 o
 - Aggregated across all active campaigns.
 
 **Recent Activity (Feed):**
-- The 20 most recent audit log entries relevant to the user, displayed as a compact feed.
+- The 20 most recent audit log entries relevant to the user, displayed as a compact feed using Framer Motion stagger animations as new items stream in.
 - Each entry shows: relative timestamp, actor, action description.
 - Entries are color-coded by category (campaign events = green dot, infrastructure = blue, system = gray, security = red).
 - "View all logs →" link at the bottom navigates to the Audit Logs page.

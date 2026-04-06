@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  /* You can put any specific brand tokens here that deviate from default */
+  --color-brand-blue: #1e3a8a;
+  --color-brand-slate: #0f172a;
+}
+
+@layer base {
+  body {
+    @apply bg-[#0a0f1a] text-slate-200 antialiased;
+  }
+}
+
+/* Glassmorphism custom utilities */
+@layer utilities {
+  .glass-panel {
+    @apply bg-slate-900/40 backdrop-blur-md border border-slate-700/50 shadow-xl;
+  }
+}
