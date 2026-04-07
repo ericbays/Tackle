@@ -57,6 +57,10 @@ type godaddyError struct {
 	Message string `json:"message"`
 }
 
+type domainRecord struct {
+	Domain string `json:"domain"`
+}
+
 // TestConnection validates credentials by calling GET /v1/domains?limit=1.
 // Returns nil on success or a descriptive, actionable error on failure.
 func (c *Client) TestConnection() error {
@@ -105,4 +109,57 @@ func (c *Client) translateError(statusCode int, body []byte) error {
 		}
 		return fmt.Errorf("godaddy: unexpected HTTP %d response", statusCode)
 	}
+}
+
+// ListDomains retrieves a list of all domains associated with the provider.
+func (c *Client) ListDomains() ([]string, error) {
+	var domains []string
+	var marker string
+
+	for {
+		c.rateLimiter.Wait()
+		
+		urlVal := fmt.Sprintf("%s/v1/domains?limit=1000", c.baseURL)
+		if marker != "" {
+			urlVal += fmt.Sprintf("&marker=%s", marker)
+		}
+
+		req, err := http.NewRequest(http.MethodGet, urlVal, nil)
+		if err != nil {
+			return nil, fmt.Errorf("godaddy list_domains: build request: %w", err)
+		}
+		req.Header.Set("Authorization", fmt.Sprintf("sso-key %s:%s", c.creds.APIKey, c.creds.APISecret))
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("godaddy list_domains: connection failed: %w", err)
+		}
+
+		body, err := io.ReadAll(io.LimitReader(resp.Body, 5<<20)) // 5MB limit
+		resp.Body.Close()
+		if err != nil {
+			return nil, fmt.Errorf("godaddy list_domains: read response: %w", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, c.translateError(resp.StatusCode, body)
+		}
+
+		var records []domainRecord
+		if err := json.Unmarshal(body, &records); err != nil {
+			return nil, fmt.Errorf("godaddy list_domains: json parse failed: %w", err)
+		}
+
+		for _, r := range records {
+			domains = append(domains, r.Domain)
+		}
+
+		if len(records) < 1000 {
+			break
+		}
+		marker = records[len(records)-1].Domain
+	}
+
+	return domains, nil
 }

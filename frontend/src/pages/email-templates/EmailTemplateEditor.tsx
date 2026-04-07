@@ -6,6 +6,7 @@ import HtmlEmailEditor from '../../components/email-templates/HtmlEmailEditor';
 import VariableInsertMenu from '../../components/email-templates/VariableInsertMenu';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useRef } from 'react';
+import { toast } from 'react-hot-toast';
 
 export default function EmailTemplateEditor() {
     const { id } = useParams();
@@ -64,6 +65,7 @@ export default function EmailTemplateEditor() {
                 payload: draft
             });
             setLastSaved(new Date());
+            toast.success('Template saved successfully');
             
             if (closeAfterSave) {
                 navigate('/email-templates');
@@ -72,6 +74,7 @@ export default function EmailTemplateEditor() {
             }
         } catch (err) {
             console.error(err);
+            toast.error('Failed to save template');
         }
     };
 
@@ -205,6 +208,7 @@ export default function EmailTemplateEditor() {
                     <HtmlEmailEditor 
                         content={draft.html_body || ''} 
                         onChange={(html) => setDraft({...draft, html_body: html})} 
+                        onSave={() => handleSave(false)}
                     />
                 </div>
 

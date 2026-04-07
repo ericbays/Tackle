@@ -3,12 +3,29 @@ import { useParams } from 'react-router-dom';
 import { useCampaignStore } from '../../../store/campaignStore';
 import { useCloudCredentials, useDomains } from '../../../hooks/useConfigurations';
 
+export const PROVIDER_CONFIGS: Record<string, { regions: string[]; sizes: string[] }> = {
+    aws: {
+        regions: ['us-east-1 (N. Virginia)', 'us-east-2 (Ohio)', 'us-west-1 (N. California)', 'us-west-2 (Oregon)', 'eu-west-1 (Ireland)'],
+        sizes: ['t3.micro', 't3.small', 't3.medium', 't3.large']
+    },
+    azure: {
+        regions: ['eastus', 'eastus2', 'westus', 'centralus', 'westeurope'],
+        sizes: ['Standard_B1s', 'Standard_B1ms', 'Standard_B2s']
+    },
+    proxmox: {
+        regions: ['local', 'cluster-1'],
+        sizes: ['1vCPU, 1GB RAM', '2vCPU, 2GB RAM', '4vCPU, 4GB RAM']
+    }
+};
+
 export default function InfrastructureTab() {
     const { id } = useParams();
     const { draft: { infrastructure }, updateInfrastructure, isSaving, saveCampaign } = useCampaignStore();
 
     const { data: cloudCredentials = [], isLoading: isLoadingCreds } = useCloudCredentials();
     const { data: domains = [], isLoading: isLoadingDomains } = useDomains();
+
+    const selectedConfig = PROVIDER_CONFIGS[infrastructure.provider?.toLowerCase()] || { regions: [], sizes: [] };
 
     return (
         <div className="space-y-8">
@@ -27,7 +44,7 @@ export default function InfrastructureTab() {
                             ) : (
                                 <select 
                                     value={infrastructure.provider}
-                                    onChange={(e) => updateInfrastructure({ provider: e.target.value })}
+                                    onChange={(e) => updateInfrastructure({ provider: e.target.value, region: '', instanceSize: '' })}
                                     className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
                                 >
                                     <option value="">Select a configured provider...</option>
@@ -44,9 +61,13 @@ export default function InfrastructureTab() {
                             <select 
                                 value={infrastructure.region}
                                 onChange={(e) => updateInfrastructure({ region: e.target.value })}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                                disabled={!infrastructure.provider || selectedConfig.regions.length === 0}
                             >
-                                <option>us-east-1 (N. Virginia)</option>
+                                <option value="">Select Region...</option>
+                                {selectedConfig.regions.map(r => (
+                                    <option key={r} value={r}>{r}</option>
+                                ))}
                             </select>
                         </div>
                         <div>
@@ -54,11 +75,17 @@ export default function InfrastructureTab() {
                             <select 
                                 value={infrastructure.instanceSize}
                                 onChange={(e) => updateInfrastructure({ instanceSize: e.target.value })}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                                disabled={!infrastructure.provider || selectedConfig.sizes.length === 0}
                             >
-                                <option>t3.micro</option>
+                                <option value="">Select Size...</option>
+                                {selectedConfig.sizes.map(s => (
+                                    <option key={s} value={s}>{s}</option>
+                                ))}
                             </select>
-                            <p className="mt-2 text-xs text-slate-500">Recommended for your 75 targets</p>
+                            {infrastructure.instanceSize && (
+                                <p className="mt-2 text-xs text-slate-500">Recommended for your configured targets</p>
+                            )}
                         </div>
                     </div>
                 </div>

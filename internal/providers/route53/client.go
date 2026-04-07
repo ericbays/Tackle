@@ -104,6 +104,46 @@ func (c *Client) TestConnection() error {
 	return nil
 }
 
+// ListDomains retrieves a list of all domains associated with the provider.
+func (c *Client) ListDomains() ([]string, error) {
+	var domains []string
+	var marker *string
+
+	for {
+		c.rateLimiter.Wait()
+
+		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+		
+		input := &route53.ListHostedZonesInput{
+			MaxItems: aws.Int32(100),
+			Marker:   marker,
+		}
+
+		resp, err := c.r53.ListHostedZones(ctx, input)
+		cancel()
+		
+		if err != nil {
+			return nil, fmt.Errorf("route53 list_domains: %w", translateAWSError(err))
+		}
+
+		for _, hz := range resp.HostedZones {
+			// AWS Route53 adds a trailing dot to the hosted zone names, so we strip it.
+			name := aws.ToString(hz.Name)
+			if len(name) > 0 && name[len(name)-1] == '.' {
+				name = name[:len(name)-1]
+			}
+			domains = append(domains, name)
+		}
+
+		if !resp.IsTruncated {
+			break
+		}
+		marker = resp.NextMarker
+	}
+
+	return domains, nil
+}
+
 // translateAWSError converts AWS SDK errors into actionable messages.
 func translateAWSError(err error) error {
 	if err == nil {

@@ -10,12 +10,40 @@ import CampaignList from './pages/campaigns/CampaignList';
 import WorkspaceLayout from './pages/campaigns/WorkspaceLayout';
 import EmailTemplatesPage from './pages/email-templates/EmailTemplatesPage';
 import EmailTemplateEditor from './pages/email-templates/EmailTemplateEditor';
+import UserManagementPage from './features/users/pages/UserManagementPage';
+import EngineeringPage from './features/engineering/pages/EngineeringPage';
+import { Toaster } from 'react-hot-toast';
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster 
+        position="bottom-right" 
+        toastOptions={{
+          style: {
+            background: '#1e293b', /* bg-slate-800 */
+            color: '#f8fafc',      /* text-slate-50 */
+            border: '1px solid #334155', /* border-slate-700 */
+            fontSize: '14px',
+            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5)',
+            marginBottom: '40px'
+          },
+          success: {
+            iconTheme: {
+              primary: '#3b82f6',
+              secondary: '#1e293b',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#1e293b',
+            },
+          },
+        }}
+      />
       <BrowserRouter>
         <Routes>
           <Route element={<GuestGuard />}>
@@ -32,6 +60,8 @@ function App() {
               <Route path="/campaigns/:id/*" element={<WorkspaceLayout />} />
               <Route path="/email-templates" element={<EmailTemplatesPage />} />
               <Route path="/email-templates/:id" element={<EmailTemplateEditor />} />
+              <Route path="/engineering" element={<EngineeringPage />} />
+              <Route path="/users" element={<UserManagementPage />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>

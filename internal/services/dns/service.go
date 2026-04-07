@@ -548,18 +548,21 @@ func (s *Service) GetPropagationChecks(ctx context.Context, domainProfileID stri
 
 // --- internal helpers ---
 
-// resolveProvider loads the domain profile, fetches its DNS provider connection,
-// decrypts credentials, and returns a ready dns.Provider and zone name.
 func (s *Service) resolveProvider(ctx context.Context, domainProfileID string) (dnsiface.Provider, string, error) {
 	profile, err := s.profileRepo.GetByID(ctx, domainProfileID)
 	if err != nil {
 		return nil, "", fmt.Errorf("dns service: get profile: %w", err)
 	}
-	if profile.DNSProviderConnectionID == nil {
+
+	connID := profile.DNSProviderConnectionID
+	if connID == nil {
+		connID = profile.RegistrarConnectionID
+	}
+	if connID == nil {
 		return nil, "", fmt.Errorf("dns service: domain %q has no DNS provider connection configured", profile.DomainName)
 	}
 
-	conn, err := s.providerRepo.GetByID(ctx, *profile.DNSProviderConnectionID)
+	conn, err := s.providerRepo.GetByID(ctx, *connID)
 	if err != nil {
 		return nil, "", fmt.Errorf("dns service: get provider connection: %w", err)
 	}

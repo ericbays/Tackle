@@ -40,6 +40,9 @@ func (v *ValidationResult) OK() bool { return len(v.Errors) == 0 }
 // separated by dots, with no leading or trailing hyphens per label.
 var hostnameRE = regexp.MustCompile(`^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?$`)
 
+// recordNameRE allows underscores and wildcards commonly used in DNS record names (e.g., _dmarc, *).
+var recordNameRE = regexp.MustCompile(`^([a-zA-Z0-9\*\_\-]{1,63}\.)*[a-zA-Z0-9\*\_\-]{1,63}$`)
+
 const (
 	minTTL     = 60
 	maxTTL     = 86400
@@ -104,10 +107,10 @@ func validateName(name string, result *ValidationResult) {
 		}
 	}
 
-	if !hostnameRE.MatchString(name) {
+	if !recordNameRE.MatchString(name) {
 		result.Errors = append(result.Errors, &ValidationError{
 			Field:   "name",
-			Message: fmt.Sprintf("name %q contains invalid characters (RFC 1123)", name),
+			Message: fmt.Sprintf("name %q contains invalid characters (allowed: alphanumeric, -, _, *)", name),
 		})
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -310,6 +311,8 @@ func writeServiceError(w http.ResponseWriter, err error, correlationID string) {
 		response.Error(w, "RATE_LIMITED", "provider API rate limit exceeded", http.StatusTooManyRequests, correlationID)
 		return
 	}
+	
+	slog.Error("dns service unmapped error", "error", err, "correlation_id", correlationID)
 	response.Error(w, "INTERNAL_ERROR", "internal server error", http.StatusInternalServerError, correlationID)
 }
 

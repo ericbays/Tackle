@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Bold, Italic, Strikethrough, Heading1, Heading2, Heading3, List, ListOrdered, Link as LinkIcon, Monitor, Smartphone, Maximize, Minimize, AlertTriangle } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Heading1, Heading2, Heading3, List, ListOrdered, Link as LinkIcon, Monitor, Smartphone, Maximize, Minimize, AlertTriangle, AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-markup';
 import 'prismjs/themes/prism-tomorrow.css';
 
 import beautify from 'js-beautify';
 import VariableInsertMenu from './VariableInsertMenu';
+import TableInsertMenu from './TableInsertMenu';
+import ContainerInsertMenu from './ContainerInsertMenu';
+import ElementContextMenu from './ElementContextMenu';
 
 // Add custom parsing for Handlebars-style template variables {{...}}
 if (Prism.languages && Prism.languages.markup) {
@@ -59,13 +62,15 @@ function checkOutlookCompatibility(html: string): string[] {
 interface HtmlEmailEditorProps {
     content: string;
     onChange: (html: string) => void;
+    onSave?: () => void;
 }
 
-export default function HtmlEmailEditor({ content, onChange }: HtmlEmailEditorProps) {
+export default function HtmlEmailEditor({ content, onChange, onSave }: HtmlEmailEditorProps) {
     const [mode, setMode] = useState<'wysiwyg' | 'html' | 'preview'>('wysiwyg');
     const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
     const [htmlInput, setHtmlInput] = useState(content);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: HTMLElement | null } | null>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const isUpdatingRef = useRef(false);
     const cleanupRef = useRef<(() => void) | null>(null);
@@ -100,13 +105,33 @@ export default function HtmlEmailEditor({ content, onChange }: HtmlEmailEditorPr
             isUpdatingRef.current = false;
         };
 
+        const handleContextMenu = (e: MouseEvent) => {
+            e.preventDefault();
+            const iframeRect = iframeRef.current?.getBoundingClientRect();
+            if (iframeRect) {
+                let target = e.target as HTMLElement;
+                if (target.nodeType === 3) target = target.parentElement as HTMLElement; // Map up from TextNode
+                setContextMenu({
+                    x: e.clientX + iframeRect.left,
+                    y: e.clientY + iframeRect.top,
+                    node: target
+                });
+            }
+        };
+
+        const handleIframeClick = () => setContextMenu(null);
+
         const observer = new MutationObserver(syncChanges);
         observer.observe(doc.documentElement, { childList: true, subtree: true, characterData: true, attributes: true });
         doc.addEventListener('keyup', syncChanges);
+        doc.addEventListener('contextmenu', handleContextMenu);
+        doc.addEventListener('click', handleIframeClick);
         
         return () => {
             observer.disconnect();
             doc.removeEventListener('keyup', syncChanges);
+            doc.removeEventListener('contextmenu', handleContextMenu);
+            doc.removeEventListener('click', handleIframeClick);
         };
     };
 
@@ -160,6 +185,10 @@ export default function HtmlEmailEditor({ content, onChange }: HtmlEmailEditorPr
         execCmd('insertHTML', variable);
     };
 
+    const insertHTMLConfigured = (htmlString: string) => {
+        execCmd('insertHTML', htmlString);
+    };
+
     return (
         <div className={`flex flex-col border-slate-700 overflow-hidden bg-slate-900 flex-1 ${
             isFullscreen ? 'fixed inset-0 z-50 border-0 rounded-none' : 'border rounded-md h-full'
@@ -186,13 +215,23 @@ export default function HtmlEmailEditor({ content, onChange }: HtmlEmailEditorPr
                         Preview
                     </button>
                 </div>
-                <button
-                    onClick={() => setIsFullscreen(!isFullscreen)}
-                    className="p-1.5 mr-1 text-slate-400 hover:text-white rounded hover:bg-slate-800/50 transition-colors"
-                    title={isFullscreen ? "Exit Fullscreen" : "Fullscreen Editor"}
-                >
-                    {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-                </button>
+                <div className="flex items-center gap-2 mr-1">
+                    {isFullscreen && onSave && (
+                        <button
+                            onClick={onSave}
+                            className="px-3 py-1 flex items-center gap-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
+                        >
+                            Save
+                        </button>
+                    )}
+                    <button
+                        onClick={() => setIsFullscreen(!isFullscreen)}
+                        className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800/50 transition-colors"
+                        title={isFullscreen ? "Exit Fullscreen" : "Fullscreen Editor"}
+                    >
+                        {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                    </button>
+                </div>
             </div>
 
             {/* Toolbar */}
@@ -212,10 +251,30 @@ export default function HtmlEmailEditor({ content, onChange }: HtmlEmailEditorPr
                          <button onClick={() => execCmd('insertUnorderedList')} className="p-1.5 rounded hover:bg-slate-700 text-slate-400"><List className="w-4 h-4" /></button>
                          <button onClick={() => execCmd('insertOrderedList')} className="p-1.5 rounded hover:bg-slate-700 text-slate-400"><ListOrdered className="w-4 h-4" /></button>
                      </div>
-                     <div className="flex gap-1 px-2 border-r border-slate-700">
-                         <button onClick={setLink} className="p-1.5 rounded hover:bg-slate-700 text-slate-400"><LinkIcon className="w-4 h-4" /></button>
+                     <div className="flex gap-1 px-2 border-r border-slate-700 items-center">
+                         <button onClick={setLink} className="p-1.5 rounded hover:bg-slate-700 text-slate-400" title="Insert Link"><LinkIcon className="w-4 h-4" /></button>
                      </div>
-                     <div className="flex pl-2">
+                     <div className="flex gap-1 px-2 border-r border-slate-700 items-center">
+                         <button onClick={() => execCmd('justifyLeft')} className="p-1.5 rounded hover:bg-slate-700 text-slate-400" title="Align Left"><AlignLeft className="w-4 h-4" /></button>
+                         <button onClick={() => execCmd('justifyCenter')} className="p-1.5 rounded hover:bg-slate-700 text-slate-400" title="Align Center"><AlignCenter className="w-4 h-4" /></button>
+                         <button onClick={() => execCmd('justifyRight')} className="p-1.5 rounded hover:bg-slate-700 text-slate-400" title="Align Right"><AlignRight className="w-4 h-4" /></button>
+                         <button onClick={() => execCmd('justifyFull')} className="p-1.5 rounded hover:bg-slate-700 text-slate-400" title="Justify"><AlignJustify className="w-4 h-4" /></button>
+                     </div>
+                     <div className="flex gap-2 px-2 border-r border-slate-700 items-center">
+                         <div className="flex items-center gap-1">
+                             <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Text</span>
+                             <input type="color" onChange={(e) => execCmd('foreColor', e.target.value)} className="w-[18px] h-[18px] cursor-pointer bg-transparent border-0 p-0" title="Text Color" />
+                         </div>
+                         <div className="flex items-center gap-1">
+                             <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">BG</span>
+                             <input type="color" onChange={(e) => execCmd('hiliteColor', e.target.value)} className="w-[18px] h-[18px] cursor-pointer bg-transparent border-0 p-0" title="Highlight Color" />
+                         </div>
+                     </div>
+                     <div className="flex gap-1 px-2 border-r border-slate-700 items-center">
+                         <TableInsertMenu onInsert={insertHTMLConfigured} buttonClassName="p-1.5 rounded hover:bg-slate-700 text-slate-400" />
+                         <ContainerInsertMenu onInsert={insertHTMLConfigured} buttonClassName="p-1.5 rounded hover:bg-slate-700 text-slate-400" />
+                     </div>
+                     <div className="flex pl-2 items-center">
                          <VariableInsertMenu 
                              onInsert={insertVariable}
                              buttonClassName="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded transition-colors"
@@ -341,9 +400,21 @@ export default function HtmlEmailEditor({ content, onChange }: HtmlEmailEditorPr
                 )}
             </div>
             
-            <div className="p-2 border-t border-slate-800 text-xs text-slate-500 text-right bg-slate-950">
+            <div className="p-2 border-t border-slate-800 text-xs text-slate-500 text-right bg-slate-950 shrink-0">
                 {htmlInput.length} characters
             </div>
+
+            {contextMenu && (
+                <ElementContextMenu 
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    targetNode={contextMenu.node}
+                    onClose={() => setContextMenu(null)}
+                    onUpdate={() => {
+                        // MutaionObserver handles real-time sync automatically.
+                    }}
+                />
+            )}
         </div>
     );
 }

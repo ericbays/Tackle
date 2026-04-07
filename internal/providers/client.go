@@ -7,4 +7,8 @@ type ProviderClient interface {
 	// TestConnection validates the stored credentials against the provider's API.
 	// Returns nil on success or a descriptive, actionable error on failure.
 	TestConnection() error
+
+	// ListDomains retrieves a list of all domains associated with the provider.
+	// Returns a slice of fully qualified domain names or an error.
+	ListDomains() ([]string, error)
 }

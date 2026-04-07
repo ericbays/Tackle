@@ -793,6 +793,7 @@ func buildRouter(cfg *config.Config, db *sql.DB, masterKey []byte, logger *slog.
 			r.With(writeRL, requirePerm("domains:update")).Post("/settings/domain-providers/{id}/test", dpDeps.TestConn)
 
 			// Domain management endpoints (Phase 2).
+			r.With(writeRL, requirePerm("domains:create")).Post("/domains/sync", domainDeps.SyncAll)
 			r.With(writeRL, bodySizeMW(bodySizeStandard), requirePerm("domains:create")).Post("/domains", domainDeps.Create)
 			r.With(readRL, requirePerm("domains:read")).Get("/domains", domainDeps.List)
 			r.With(readRL, requirePerm("domains:read")).Get("/domains/{id}", domainDeps.Get)

@@ -13,7 +13,9 @@ export default function AppShell() {
         <nav className="flex-1 p-4 flex flex-col gap-2">
           <NavLink to="/dashboard" className={({isActive}) => `p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>Dashboard</NavLink>
           <NavLink to="/campaigns" className={({isActive}) => `p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>Campaigns</NavLink>
+          <NavLink to="/engineering" className={({isActive}) => `p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>Engineering</NavLink>
           <NavLink to="/email-templates" className={({isActive}) => `p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>Email Templates</NavLink>
+          <NavLink to="/users" className={({isActive}) => `p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>Users & Roles</NavLink>
         </nav>
         <div className="p-4 border-t border-slate-800 border-opacity-50">
           <button onClick={logout} className="w-full text-left p-3 rounded-md text-red-400 hover:bg-slate-800 transition-colors">Log out</button>

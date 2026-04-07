@@ -1,4 +1,4 @@
-import { Plus, X, Users, AlertTriangle } from 'lucide-react';
+import { Plus, X, Users, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useCampaignStore } from '../../../store/campaignStore';
 
@@ -44,27 +44,15 @@ export default function TargetsTab() {
                 </div>
             </section>
 
-            <section className="bg-amber-950/20 border-l-4 border-l-amber-500 border-y border-y-slate-800 border-r border-r-slate-800 rounded-lg p-6">
+            <section className="bg-emerald-950/20 border-l-4 border-l-emerald-500 border-y border-y-slate-800 border-r border-r-slate-800 rounded-lg p-6">
                 <div className="flex items-start gap-4">
-                    <AlertTriangle className="w-6 h-6 text-amber-500 shrink-0 mt-1" />
+                    <ShieldCheck className="w-6 h-6 text-emerald-500 shrink-0 mt-1" />
                     <div>
-                        <h3 className="font-semibold text-amber-500 text-sm uppercase tracking-widest mb-3">Blocklist Check</h3>
-                        <p className="text-slate-300 text-sm mb-4">2 targets match blocklist entries:</p>
-                        
-                        <ul className="space-y-2 text-sm text-slate-400 mb-6">
-                            <li className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50" />
-                                <span className="text-slate-300 font-medium">ceo@example.com</span> — "CEO exclusion per policy" (added Jan 15)
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50" />
-                                <span className="text-slate-300 font-medium">bp.legal@example.com</span> — "Legal exclusion compliance" (added Feb 10)
-                            </li>
-                        </ul>
-                        
+                        <h3 className="font-semibold text-emerald-500 text-sm uppercase tracking-widest mb-3">Blocklist Check</h3>
+                        <p className="text-slate-300 text-sm mb-4">No targets match any active blocklist entries.</p>
                         <p className="text-xs text-slate-500 leading-relaxed">
-                            Blocklist matches do not prevent the campaign from proceeding.<br/>
-                            An additional Administrator approval will be required before launch.
+                            All {totalTargets} targets have been cross-checked against your global blocklist policies.<br/>
+                            This campaign is cleared for scheduling.
                         </p>
                     </div>
                 </div>
@@ -74,7 +62,15 @@ export default function TargetsTab() {
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-2">
                         <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">Canary Targets</h2>
-                        <button className="flex items-center gap-2 text-sm text-blue-500 hover:text-blue-400 px-3 py-1.5 transition-colors font-medium">
+                        <button 
+                            onClick={() => {
+                                const email = prompt('Enter canary email address:');
+                                if (email && email.includes('@')) {
+                                    useCampaignStore.getState().updateCanaryTargets([...canaryTargets, email]);
+                                }
+                            }}
+                            className="flex items-center gap-2 text-sm text-blue-500 hover:text-blue-400 px-3 py-1.5 transition-colors font-medium"
+                        >
                             <Plus className="w-4 h-4" /> Add Canary
                         </button>
                     </div>
@@ -83,13 +79,20 @@ export default function TargetsTab() {
                     </p>
 
                     <div className="space-y-2">
-                        {canaryTargets.map((email, i) => (
-                            <div key={i} className="flex items-center justify-between text-sm py-2 group">
+                        {canaryTargets.length === 0 ? (
+                            <div className="text-sm text-slate-500 italic py-2">No canary targets configured.</div>
+                        ) : canaryTargets.map((email, i) => (
+                            <div key={i} className="flex items-center justify-between text-sm py-2 group bg-slate-950/50 px-3 rounded-md border border-slate-800/50">
                                 <div className="flex items-center gap-3">
                                     <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
                                     <span className="text-slate-300">{email}</span>
                                 </div>
-                                <button className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                                <button 
+                                    onClick={() => {
+                                        useCampaignStore.getState().updateCanaryTargets(canaryTargets.filter(t => t !== email));
+                                    }}
+                                    className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-1"
+                                >
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>

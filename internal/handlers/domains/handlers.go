@@ -402,3 +402,21 @@ func clientIP(r *http.Request) string {
 	}
 	return addr
 }
+
+// SyncAll handles POST /api/v1/domains/sync — calls SyncAllProviders to import missing domains.
+func (d *Deps) SyncAll(w http.ResponseWriter, r *http.Request) {
+	correlationID := middleware.GetCorrelationID(r.Context())
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims == nil {
+		response.Error(w, "UNAUTHORIZED", "authentication required", http.StatusUnauthorized, correlationID)
+		return
+	}
+
+	err := d.Svc.SyncAllProviders(r.Context(), claims.Subject, claims.Username, clientIP(r), correlationID)
+	if err != nil {
+		writeServiceError(w, err, correlationID)
+		return
+	}
+
+	response.Success(w, map[string]string{"status": "ok"})
+}

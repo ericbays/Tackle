@@ -17,6 +17,8 @@ import (
 	"tackle/internal/providers/credentials"
 	"tackle/internal/providers/godaddy"
 	"tackle/internal/providers/namecheap"
+	r53 "tackle/internal/providers/route53"
+	"tackle/internal/providers/azuredns"
 	"tackle/internal/repositories"
 	auditsvc "tackle/internal/services/audit"
 	notifsvc "tackle/internal/services/notification"
@@ -735,6 +737,125 @@ func (s *Service) SyncExpiryDates(ctx context.Context) error {
 		Action:    "domain.expiry_sync",
 		Details:   map[string]any{"synced": synced, "changed": changed},
 	})
+	return nil
+}
+
+// SyncAllProviders fetches all active domain provider connections, retrieves their domain lists,
+// and upserts any missing domains into the local database as active domain profiles.
+func (s *Service) SyncAllProviders(ctx context.Context, actorID, actorLabel, sourceIP, correlationID string) error {
+	conns, err := s.providerRepo.List(ctx, repositories.DomainProviderFilters{})
+	if err != nil {
+		return fmt.Errorf("domain: sync all providers: list connections: %w", err)
+	}
+
+	totalSynced := 0
+	totalNew := 0
+
+	for _, conn := range conns {
+		if conn.Status == repositories.ProviderStatusError {
+			continue // Skip known broken connections, try untested or healthy
+		}
+		
+		var client providers.ProviderClient
+		
+		switch providers.ProviderType(conn.ProviderType) {
+		case providers.ProviderTypeNamecheap:
+			var creds credentials.NamecheapCredentials
+			if err := s.credEnc.Decrypt(conn.CredentialsEncrypted, &creds); err != nil {
+				continue
+			}
+			client = namecheap.NewClient(creds, 0)
+			
+		case providers.ProviderTypeGoDaddy:
+			var creds credentials.GoDaddyCredentials
+			if err := s.credEnc.Decrypt(conn.CredentialsEncrypted, &creds); err != nil {
+				continue
+			}
+			client = godaddy.NewClient(creds, 0)
+			
+		case providers.ProviderTypeRoute53:
+			var creds credentials.Route53Credentials
+			if err := s.credEnc.Decrypt(conn.CredentialsEncrypted, &creds); err != nil {
+				continue
+			}
+			c, err := r53.NewClient(creds, 0)
+			if err != nil {
+				continue
+			}
+			client = c
+			
+		case providers.ProviderTypeAzureDNS:
+			var creds credentials.AzureDNSCredentials
+			if err := s.credEnc.Decrypt(conn.CredentialsEncrypted, &creds); err != nil {
+				continue
+			}
+			client = azuredns.NewClient(creds, 0)
+			
+		default:
+			continue
+		}
+		
+		domains, err := client.ListDomains()
+		if err != nil {
+			_ = s.audit.Log(ctx, auditsvc.LogEntry{
+				Category: auditsvc.CategorySystem, Severity: auditsvc.SeverityWarning,
+				ActorType: auditsvc.ActorTypeSystem, Action: "domain.sync_provider_error",
+				Details: map[string]any{"provider_id": conn.ID, "error": err.Error()},
+			})
+			continue
+		}
+		
+		for _, rawDomain := range domains {
+			domainName := strings.ToLower(strings.TrimSpace(rawDomain))
+			if err := validateDomainName(domainName); err != nil {
+				continue
+			}
+			
+			// Check if exists
+			_, err := s.profileRepo.GetByDomainName(ctx, domainName)
+			if err == nil {
+				totalSynced++
+				continue
+			}
+			
+			if !errors.Is(err, sql.ErrNoRows) {
+				continue
+			}
+			
+			// Does not exist, create it
+			connID := conn.ID
+			p := repositories.DomainProfile{
+				DomainName: domainName,
+				Status: repositories.DomainStatusActive,
+				Tags: []string{"auto-synced"},
+				CreatedBy: actorID,
+			}
+			
+			if providers.ProviderType(conn.ProviderType) == providers.ProviderTypeNamecheap || providers.ProviderType(conn.ProviderType) == providers.ProviderTypeGoDaddy {
+				p.RegistrarConnectionID = &connID
+			} else {
+				p.DNSProviderConnectionID = &connID
+			}
+
+			_, crErr := s.profileRepo.Create(ctx, p)
+			if crErr == nil {
+				totalNew++
+			}
+			totalSynced++
+		}
+		
+		// Update LastTestedAt to signal it was just successfully talked to.
+		_ = s.providerRepo.UpdateStatus(ctx, conn.ID, repositories.ProviderStatusHealthy, nil)
+	}
+	
+	_ = s.audit.Log(ctx, auditsvc.LogEntry{
+		Category: auditsvc.CategorySystem, Severity: auditsvc.SeverityInfo,
+		ActorType: auditsvc.ActorTypeUser, ActorID: &actorID, ActorLabel: actorLabel,
+		Action: "domain.providers_synced",
+		CorrelationID: correlationID, SourceIP: &sourceIP,
+		Details: map[string]any{"total_domains_synced": totalSynced, "total_new_imported": totalNew},
+	})
+
 	return nil
 }
 

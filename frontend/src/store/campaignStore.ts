@@ -45,6 +45,7 @@ interface CampaignStore {
     setDraft: (partialDraft: Partial<CampaignDraft>) => void;
     updateTargetGroups: (groups: CampaignDraft['targetGroups']) => void;
     updateEmailVariants: (variants: CampaignDraft['emailVariants']) => void;
+    updateCanaryTargets: (targets: string[]) => void;
     updateLandingPage: (id: string | null) => void;
     updateInfrastructure: (infra: Partial<CampaignDraft['infrastructure']>) => void;
     updateSchedule: (schedule: Partial<CampaignDraft['schedule']>) => void;
@@ -86,6 +87,8 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
     
     updateEmailVariants: (variants) => set((state) => ({ draft: { ...state.draft, emailVariants: variants } })),
     
+    updateCanaryTargets: (targets) => set((state) => ({ draft: { ...state.draft, canaryTargets: targets } })),
+
     updateLandingPage: (id) => set((state) => ({ draft: { ...state.draft, landingPageId: id } })),
     
     updateInfrastructure: (infra) => set((state) => ({ 
@@ -102,13 +105,18 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
         try {
             const draft = get().draft;
             
-            // 1. Update Core Campaign
+            // 1. Update Core Campaign (Includes Infrastructure, Schedule, and Canaries in Config)
             const updatePayload = {
                landing_page_id: draft.landingPageId || undefined,
                cloud_provider: draft.infrastructure.provider || undefined,
                region: draft.infrastructure.region || undefined,
                instance_type: draft.infrastructure.instanceSize || undefined,
                endpoint_domain_id: draft.infrastructure.domain || undefined,
+               start_date: draft.schedule.startDate ? new Date(draft.schedule.startDate).toISOString() : undefined,
+               configuration: {
+                   canary_targets: draft.canaryTargets,
+                   schedule: draft.schedule
+               }
             };
             
             if (Object.keys(updatePayload).some(key => updatePayload[key as keyof typeof updatePayload] !== undefined)) {
@@ -130,7 +138,19 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
                 }
             }
             
-            // Note: Triggers to add Target Groups, Schedules, and Canary targets will be extended here
+            // 3. Assign Target Groups
+            if (draft.targetGroups.length > 0) {
+                for (const group of draft.targetGroups) {
+                    try {
+                        await api.post(`/campaigns/${campaignId}/target-groups`, { group_id: group.id });
+                    } catch (e: any) {
+                        // Ignore 409 Conflict if already assigned
+                        if (e.response?.status !== 409) {
+                            throw e;
+                        }
+                    }
+                }
+            }
             
         } catch (err) {
             console.error('Failed to save campaign configurations:', err);

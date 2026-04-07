@@ -57,6 +57,21 @@ type Error struct {
 	Message string `xml:",chardata"`
 }
 
+type domainGetListResponse struct {
+	Status string  `xml:"Status,attr"`
+	Errors []Error `xml:"Errors>Error"`
+	Result struct {
+		Domains []struct {
+			Name string `xml:"Name,attr"`
+		} `xml:"DomainGetListResult>Domain"`
+		Paging struct {
+			TotalItems int `xml:"TotalItems"`
+			CurrentPage int `xml:"CurrentPage"`
+			PageSize int `xml:"PageSize"`
+		} `xml:"Paging"`
+	} `xml:"CommandResponse"`
+}
+
 // TestConnection validates credentials by calling namecheap.domains.getList with PageSize=1.
 // Returns nil on success or a descriptive, actionable error on failure.
 func (c *Client) TestConnection() error {
@@ -93,6 +108,57 @@ func (c *Client) TestConnection() error {
 	}
 
 	return c.translateError(apiResp.Errors)
+}
+
+// ListDomains retrieves a list of all domains associated with the provider.
+func (c *Client) ListDomains() ([]string, error) {
+	var domains []string
+	page := 1
+
+	for {
+		c.rateLimiter.Wait()
+		params := url.Values{
+			"ApiUser":   {c.creds.APIUser},
+			"ApiKey":    {c.creds.APIKey},
+			"UserName":  {c.creds.Username},
+			"ClientIp":  {c.creds.ClientIP},
+			"Command":   {"namecheap.domains.getList"},
+			"PageSize":  {"100"},
+			"Page":      {fmt.Sprintf("%d", page)},
+		}
+
+		reqURL := baseURL + "?" + params.Encode()
+		resp, err := c.httpClient.Get(reqURL)
+		if err != nil {
+			return nil, fmt.Errorf("namecheap list_domains: request failed: %w", err)
+		}
+
+		body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20)) // 1 MB limit
+		resp.Body.Close()
+		if err != nil {
+			return nil, fmt.Errorf("namecheap list_domains: read response failed: %w", err)
+		}
+
+		var apiResp domainGetListResponse
+		if err := xml.Unmarshal(body, &apiResp); err != nil {
+			return nil, fmt.Errorf("namecheap list_domains: xml parse failed: %w", err)
+		}
+
+		if apiResp.Status != "OK" {
+			return nil, c.translateError(apiResp.Errors)
+		}
+
+		for _, d := range apiResp.Result.Domains {
+			domains = append(domains, d.Name)
+		}
+
+		if len(apiResp.Result.Domains) < 100 {
+			break // No more pages
+		}
+		page++
+	}
+
+	return domains, nil
 }
 
 // parseXML is an internal helper for unmarshaling XML API responses, exposed for testing.

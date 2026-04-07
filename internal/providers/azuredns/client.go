@@ -31,6 +31,7 @@ type fakeOrRealPager = interface{}
 // zonesFetcher abstracts the Azure DNS ListByResourceGroup call for test injection.
 type zonesFetcher interface {
 	List(ctx context.Context, subscriptionID, resourceGroup string) error
+	ListAll(ctx context.Context, subscriptionID, resourceGroup string) ([]string, error)
 }
 
 // azureZonesFetcher is the production implementation.
@@ -63,6 +64,39 @@ func (f *azureZonesFetcher) List(ctx context.Context, subscriptionID, resourceGr
 		return translateAzureError(err)
 	}
 	return nil
+}
+
+func (f *azureZonesFetcher) ListAll(ctx context.Context, subscriptionID, resourceGroup string) ([]string, error) {
+	credential, err := azidentity.NewClientSecretCredential(
+		f.creds.TenantID,
+		f.creds.ClientID,
+		f.creds.ClientSecret,
+		nil,
+	)
+	if err != nil {
+		return nil, translateAzureError(err)
+	}
+
+	client, err := armdns.NewZonesClient(subscriptionID, credential, nil)
+	if err != nil {
+		return nil, fmt.Errorf("azure dns: create zones client: %w", err)
+	}
+
+	pager := client.NewListByResourceGroupPager(resourceGroup, &armdns.ZonesClientListByResourceGroupOptions{})
+	
+	var domains []string
+	for pager.More() {
+		resp, err := pager.NextPage(ctx)
+		if err != nil {
+			return nil, translateAzureError(err)
+		}
+		for _, zone := range resp.Value {
+			if zone.Name != nil {
+				domains = append(domains, *zone.Name)
+			}
+		}
+	}
+	return domains, nil
 }
 
 // Client is an Azure DNS API client.
@@ -106,6 +140,16 @@ func (c *Client) TestConnection() error {
 	defer cancel()
 
 	return c.fetcher.List(ctx, c.creds.SubscriptionID, c.creds.ResourceGroup)
+}
+
+// ListDomains retrieves a list of all domains associated with the provider.
+func (c *Client) ListDomains() ([]string, error) {
+	c.rateLimiter.Wait()
+
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+
+	return c.fetcher.ListAll(ctx, c.creds.SubscriptionID, c.creds.ResourceGroup)
 }
 
 // translateAzureError converts Azure SDK errors into actionable messages.

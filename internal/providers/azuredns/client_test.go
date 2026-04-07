@@ -17,6 +17,13 @@ func (m *mockFetcher) List(ctx context.Context, subscriptionID, resourceGroup st
 	return m.err
 }
 
+func (m *mockFetcher) ListAll(ctx context.Context, subscriptionID, resourceGroup string) ([]string, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	return []string{"example.com"}, nil
+}
+
 func testCreds() credentials.AzureDNSCredentials {
 	return credentials.AzureDNSCredentials{
 		TenantID:       "tenant-1234",
