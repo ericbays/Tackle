@@ -10,6 +10,7 @@ import CampaignList from './pages/campaigns/CampaignList';
 import WorkspaceLayout from './pages/campaigns/WorkspaceLayout';
 import EmailTemplatesPage from './pages/email-templates/EmailTemplatesPage';
 import EmailTemplateEditor from './pages/email-templates/EmailTemplateEditor';
+import LandingPageList from './pages/landing-pages/LandingPageList';
 import UserManagementPage from './features/users/pages/UserManagementPage';
 import EngineeringPage from './features/engineering/pages/EngineeringPage';
 import { Toaster } from 'react-hot-toast';
@@ -60,6 +61,7 @@ function App() {
               <Route path="/campaigns/:id/*" element={<WorkspaceLayout />} />
               <Route path="/email-templates" element={<EmailTemplatesPage />} />
               <Route path="/email-templates/:id" element={<EmailTemplateEditor />} />
+              <Route path="/landing-pages" element={<LandingPageList />} />
               <Route path="/engineering" element={<EngineeringPage />} />
               <Route path="/users" element={<UserManagementPage />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />

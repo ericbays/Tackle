@@ -10,9 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@dnd-kit/core": "^6.3.1",
-    "@dnd-kit/sortable": "^10.0.0",
-    "@dnd-kit/utilities": "^3.2.2",
     "@tanstack/react-query": "^5.96.2",
     "@tiptap/extension-link": "^3.22.2",
     "@tiptap/pm": "^3.22.2",
@@ -34,6 +31,7 @@
     "clsx": "^2.1.1",
     "d3-array": "^3.2.4",
     "d3-time-format": "^4.1.0",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.38.0",
     "js-beautify": "^1.15.4",
     "lucide-react": "^1.7.0",

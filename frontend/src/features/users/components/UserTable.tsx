@@ -5,6 +5,7 @@ import type { User } from '../services/userApi';
 import { MoreHorizontal, ShieldCheck, User as UserIcon, Shield } from 'lucide-react';
 import UserCreateModal from '../components/UserCreateModal';
 import UserRoleAssignModal from '../components/UserRoleAssignModal';
+import PermissionGate from '../../../components/auth/PermissionGate';
 
 export default function UserTable() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -30,12 +31,14 @@ export default function UserTable() {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <button 
-          onClick={() => setIsCreateModalOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
-        >
-          Create User
-        </button>
+        <PermissionGate permission="users:create">
+          <button 
+            onClick={() => setIsCreateModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+          >
+            Create User
+          </button>
+        </PermissionGate>
       </div>
 
       <UserCreateModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
@@ -94,13 +97,15 @@ export default function UserTable() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2 text-slate-400">
-                        <button 
-                          onClick={() => setRoleAssignUser(user)}
-                          className="hover:text-blue-400 p-1.5 rounded bg-slate-800/50 hover:bg-slate-800 transition-colors"
-                          title="Assign Roles"
-                        >
-                          <Shield size={16} />
-                        </button>
+                        <PermissionGate permission="users:update">
+                          <button 
+                            onClick={() => setRoleAssignUser(user)}
+                            className="hover:text-blue-400 p-1.5 rounded bg-slate-800/50 hover:bg-slate-800 transition-colors"
+                            title="Assign Roles"
+                          >
+                            <Shield size={16} />
+                          </button>
+                        </PermissionGate>
                         <button className="hover:text-white p-1.5 rounded hover:bg-slate-700 transition-colors">
                           <MoreHorizontal size={18} />
                         </button>

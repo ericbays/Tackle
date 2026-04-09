@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Users, Shield, UserPlus } from 'lucide-react';
+import { Users, Shield, UserPlus, Activity } from 'lucide-react';
 import UserTable from '../components/UserTable';
 import RoleTable from '../components/RoleTable';
+import AuditLogTable from '../components/AuditLogTable';
 
 export default function UserManagementPage() {
-  const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'audit'>('users');
 
   return (
     <div className="space-y-6">
@@ -38,12 +39,24 @@ export default function UserManagementPage() {
           <Shield size={18} />
           Roles & Permissions
         </button>
+        <button
+          onClick={() => setActiveTab('audit')}
+          className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 ${
+            activeTab === 'audit'
+              ? 'border-blue-500 text-blue-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Activity size={18} />
+          Audit Logs
+        </button>
       </div>
 
       {/* Tab Panels */}
       <div className="mt-6">
         {activeTab === 'users' && <UserTable />}
         {activeTab === 'roles' && <RoleTable />}
+        {activeTab === 'audit' && <AuditLogTable />}
       </div>
     </div>
   );

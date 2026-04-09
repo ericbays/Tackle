@@ -15,6 +15,7 @@ export default function AppShell() {
           <NavLink to="/campaigns" className={({isActive}) => `p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>Campaigns</NavLink>
           <NavLink to="/engineering" className={({isActive}) => `p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>Engineering</NavLink>
           <NavLink to="/email-templates" className={({isActive}) => `p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>Email Templates</NavLink>
+          <NavLink to="/landing-pages" className={({isActive}) => `p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>Landing Pages</NavLink>
           <NavLink to="/users" className={({isActive}) => `p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>Users & Roles</NavLink>
         </nav>
         <div className="p-4 border-t border-slate-800 border-opacity-50">

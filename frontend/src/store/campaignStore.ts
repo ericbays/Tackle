@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../services/api';
+import toast from 'react-hot-toast';
 
 export interface TargetGroup {
     id: string;
@@ -39,7 +40,17 @@ export interface CampaignDraft {
     schedule: Schedule;
 }
 
+export interface CampaignDetails {
+    id: string;
+    name: string;
+    status: string;
+    owner: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 interface CampaignStore {
+    campaign: CampaignDetails | null;
     draft: CampaignDraft;
     isSaving: boolean;
     setDraft: (partialDraft: Partial<CampaignDraft>) => void;
@@ -77,6 +88,7 @@ const emptyInitialData: CampaignDraft = {
 };
 
 export const useCampaignStore = create<CampaignStore>((set, get) => ({
+    campaign: null,
     draft: emptyInitialData,
     isSaving: false,
     isLoading: false,
@@ -152,8 +164,10 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
                 }
             }
             
+            toast.success('Campaign configurations saved automatically.');
         } catch (err) {
             console.error('Failed to save campaign configurations:', err);
+            toast.error('Failed to save campaign. Please try again.');
         } finally {
             set({ isSaving: false });
         }
@@ -170,6 +184,14 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
             const variants = variantsRes.data?.data || [];
 
             set(() => ({
+                campaign: {
+                    id: data.id,
+                    name: data.name,
+                    status: data.status || 'draft',
+                    owner: data.created_by || 'Unknown',
+                    createdAt: data.created_at || new Date().toISOString(),
+                    updatedAt: data.updated_at || new Date().toISOString(),
+                },
                 draft: {
                     ...emptyInitialData,
                     landingPageId: data.landing_page_id || null,
@@ -179,9 +201,11 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
                         instanceSize: data.instance_type || '',
                         domain: data.endpoint_domain_id || ''
                     },
+                    canaryTargets: data.configuration?.canary_targets || emptyInitialData.canaryTargets,
                     schedule: {
                         ...emptyInitialData.schedule,
-                        startDate: data.start_date || '',
+                        ...(data.configuration?.schedule || {}),
+                        startDate: data.start_date ? data.start_date.split('T')[0] : '',
                     },
                     emailVariants: variants.length > 0 ? variants.map((v: any) => ({
                         id: v.id,

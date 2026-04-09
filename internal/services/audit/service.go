@@ -263,16 +263,16 @@ func (s *AuditService) insertBatch(ctx context.Context, entries []LogEntry) erro
 			string(e.Category),
 			string(e.Severity),
 			string(e.ActorType),
-			e.ActorID,
+			nullableUUIDPtr(e.ActorID),
 			e.ActorLabel,
 			e.Action,
-			e.ResourceType,
-			e.ResourceID,
+			nullableStrPtr(e.ResourceType),
+			nullableUUIDPtr(e.ResourceID),
 			detailsArg,
 			nullableUUID(e.CorrelationID),
-			e.SourceIP,
-			e.SessionID,
-			e.CampaignID,
+			nullableStrPtr(e.SourceIP),
+			nullableUUIDPtr(e.SessionID),
+			nullableUUIDPtr(e.CampaignID),
 			e.Checksum,
 			prevChecksum,
 		)
@@ -296,4 +296,20 @@ func nullableUUID(s string) any {
 		return nil
 	}
 	return s
+}
+
+// nullableUUIDPtr returns nil if the pointer is nil, empty, or an invalid format like "system".
+func nullableUUIDPtr(s *string) any {
+	if s == nil || *s == "" || *s == "system" {
+		return nil
+	}
+	return *s
+}
+
+// nullableStrPtr returns nil for nil or empty string pointers.
+func nullableStrPtr(s *string) any {
+	if s == nil || *s == "" {
+		return nil
+	}
+	return *s
 }

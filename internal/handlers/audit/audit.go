@@ -116,7 +116,13 @@ func (d *Deps) List(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if v := q.Get("search"); v != "" {
-		clauses = append(clauses, "(action ILIKE "+nextArg("%"+v+"%")+" OR details::text ILIKE "+nextArg("%"+v+"%")+")")
+		searchArg := nextArg("%" + v + "%")
+		clauses = append(clauses, "(action ILIKE "+searchArg+
+			" OR details::text ILIKE "+searchArg+
+			" OR actor_label ILIKE "+searchArg+
+			" OR severity ILIKE "+searchArg+
+			" OR source_ip::text ILIKE "+searchArg+
+			" OR resource_type ILIKE "+searchArg+")")
 	}
 	if cursor != "" {
 		// Cursor is (timestamp, id) encoded as "timestamp:id" for stable pagination.
@@ -190,6 +196,7 @@ func scanRow(rows *sql.Rows) (*logEntryResponse, error) {
 		sourceIP     sql.NullString
 		sessionID    sql.NullString
 		campaignID   sql.NullString
+		checksum     sql.NullString
 		prevChecksum sql.NullString
 		category     string
 		severity     string
@@ -198,7 +205,7 @@ func scanRow(rows *sql.Rows) (*logEntryResponse, error) {
 	err := rows.Scan(
 		&e.ID, &e.Timestamp, &category, &severity, &actorType,
 		&actorID, &actorLabel, &e.Action, &resType, &resID,
-		&detailsRaw, &corrID, &sourceIP, &sessionID, &campaignID, &e.Checksum,
+		&detailsRaw, &corrID, &sourceIP, &sessionID, &campaignID, &checksum,
 		&prevChecksum,
 	)
 	if err != nil {
@@ -236,6 +243,9 @@ func scanRow(rows *sql.Rows) (*logEntryResponse, error) {
 	if campaignID.Valid {
 		s := campaignID.String
 		e.CampaignID = &s
+	}
+	if checksum.Valid {
+		e.Checksum = checksum.String
 	}
 	if prevChecksum.Valid {
 		e.PreviousChecksum = prevChecksum.String

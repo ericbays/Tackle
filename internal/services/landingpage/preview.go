@@ -60,6 +60,8 @@ func RenderPreviewHTML(def map[string]any, pageIndex int) (string, error) {
 		faviconTag = fmt.Sprintf(`    <link rel="icon" href="%s">`, html.EscapeString(favicon))
 	}
 
+	baseCSS := `body{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;}*,*:before,*:after{box-sizing:inherit;}img{max-width:100%;height:auto;}input,select,textarea{display:block;width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-family:inherit;font-size:14px;}button{font-family:inherit;cursor:pointer;}form{display:flex;flex-direction:column;gap:12px;}`
+
 	return fmt.Sprintf(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -69,8 +71,9 @@ func RenderPreviewHTML(def map[string]any, pageIndex int) (string, error) {
 %s%s
     <style>%s</style>
     <style>%s</style>
+    <style>%s</style>
 </head>
-<body>
+<body style="margin: 0; padding: 0; overflow-x: hidden;">
     <div style="position:fixed;top:0;left:0;right:0;background:#ff6b00;color:#fff;text-align:center;padding:4px 0;font-family:sans-serif;font-size:12px;font-weight:bold;z-index:99999;">PREVIEW MODE</div>
     <div style="padding-top:24px;">
 %s
@@ -82,6 +85,7 @@ func RenderPreviewHTML(def map[string]any, pageIndex int) (string, error) {
 		html.EscapeString(title),
 		faviconTag,
 		metaTags.String(),
+		baseCSS,
 		globalStyles,
 		pageStyles,
 		body.String(),
@@ -124,6 +128,11 @@ func renderComponent(w *strings.Builder, comp any, depth int) {
 		renderChildren(w, children, depth+1)
 		w.WriteString(fmt.Sprintf("%s</%s>\n", indent, tag))
 
+	case "form":
+		w.WriteString(fmt.Sprintf("%s<form%s>\n", indent, attrs))
+		renderChildren(w, children, depth+1)
+		w.WriteString(fmt.Sprintf("%s</form>\n", indent))
+
 	case "row":
 		rowStyle := mergePreviewStyles("display:flex;", inlineStyle)
 		w.WriteString(fmt.Sprintf("%s<div%s>\n", indent, buildAttrs(id, cssClass, rowStyle)))
@@ -146,13 +155,17 @@ func renderComponent(w *strings.Builder, comp any, depth int) {
 		content, _ := props["content"].(string)
 		w.WriteString(fmt.Sprintf("%s<%s%s>%s</%s>\n", indent, level, attrs, html.EscapeString(content), level))
 
-	case "paragraph":
+	case "paragraph", "text", "span":
+		tag := cType
+		if tag == "text" || tag == "span" {
+			tag = "span"
+		} else {
+			tag = "p"
+		}
 		content, _ := props["content"].(string)
-		w.WriteString(fmt.Sprintf("%s<p%s>%s</p>\n", indent, attrs, html.EscapeString(content)))
-
-	case "span":
-		content, _ := props["content"].(string)
-		w.WriteString(fmt.Sprintf("%s<span%s>%s</span>\n", indent, attrs, html.EscapeString(content)))
+		mergedStyle := mergePreviewStyles("white-space:pre-wrap;", inlineStyle)
+		textAttrs := buildAttrs(id, cssClass, mergedStyle)
+		w.WriteString(fmt.Sprintf("%s<%s%s>%s</%s>\n", indent, tag, textAttrs, html.EscapeString(content), tag))
 
 	case "label":
 		content, _ := props["content"].(string)

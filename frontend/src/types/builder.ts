@@ -1,33 +1,6 @@
-export type ComponentType = 
-  | 'Container' 
-  | 'Grid' 
-  | 'Columns' 
-  | 'Column' 
-  | 'Spacer' 
-  | 'Divider'
-  | 'Navbar'
-  | 'Footer'
-  | 'Breadcrumb'
-  | 'Heading'
-  | 'Paragraph'
-  | 'Rich Text'
-  | 'Image'
-  | 'Video Embed'
-  | 'Form Container'
-  | 'Text Input'
-  | 'Email Input'
-  | 'Password Input'
-  | 'Select'
-  | 'Checkbox'
-  | 'Radio Group'
-  | 'Submit Button'
-  | 'Button'
-  | 'Link'
-  | 'Tab Group'
-  | 'Accordion'
-  | 'Logo Placeholder'
-  | 'Hero Banner';
+export type ComponentType = string;
 
+// The backend strictly parses the AST schema according to standard properties mapping.
 export interface StyleProperties {
   display?: string;
   position?: string;
@@ -45,42 +18,53 @@ export interface StyleProperties {
   textTransform?: string;
   backgroundColor?: string;
   opacity?: number;
-  // Fallback for custom injected styles. Safe as a Record<string, string> mapping to React.CSSProperties
   [key: string]: any;
 }
 
 export interface ComponentNode {
-  id: string; // unique UUID per instance
-  type: ComponentType;
-  label?: string; // custom name if renamed in Layers
-  isHidden: boolean;
-  isLocked: boolean;
+  component_id: string; // unique UUID per instance, mapped from Go's requirement
+  type: ComponentType; // Must be lowercase e.g., 'heading', 'container', 'form'
   
-  // Tab 1: Content properties (context-sensitive)
-  props: Record<string, any>;
+  // Properties contains BOTH attributes and inline styles for the backend to interpret natively
+  properties: {
+      text?: string;
+      src?: string;
+      alt?: string;
+      placeholder?: string;
+      level?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+      href?: string;
+      style?: StyleProperties;
+      [key: string]: any;
+  };
   
-  // Tab 2: Style properties
-  style: StyleProperties;
-  
-  // Tab 3: Advanced
-  customCss?: string;
-  customJs?: string;
-  
-  children: ComponentNode[];
+  event_bindings?: any[];
+  children?: ComponentNode[];
 }
 
 export interface PageNode {
-  id: string;
+  page_id: string;
   name: string;
-  isStartPage: boolean;
-  rootComponent: ComponentNode; // A single invisible root container
+  route: string;
+  title: string;
+  favicon?: string;
+  meta_tags?: any[];
+  component_tree: ComponentNode[]; // Replaces single rootComponent to match Go AST
+  page_styles?: string;
+  page_js?: string;
+}
+
+export interface LandingPageDefinitionJSON {
+  schema_version: number;
+  pages: PageNode[];
+  global_styles: string;
+  global_js: string;
+  theme: Record<string, any>;
+  navigation: any[];
 }
 
 export interface LandingPageProject {
   id: string;
   name: string;
-  pages: PageNode[];
-  globalCss: string;
-  globalJs: string;
-  themeId?: string;
+  description?: string;
+  definition_json: LandingPageDefinitionJSON;
 }

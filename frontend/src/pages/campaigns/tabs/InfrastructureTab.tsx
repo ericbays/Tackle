@@ -2,6 +2,7 @@ import { Cloud, Server, Globe, ShieldCheck } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useCampaignStore } from '../../../store/campaignStore';
 import { useCloudCredentials, useDomains } from '../../../hooks/useConfigurations';
+import PermissionGate from '../../../components/auth/PermissionGate';
 
 export const PROVIDER_CONFIGS: Record<string, { regions: string[]; sizes: string[] }> = {
     aws: {
@@ -142,13 +143,15 @@ export default function InfrastructureTab() {
             </section>
 
             <div className="flex justify-end pt-4">
-                <button 
-                    onClick={() => saveCampaign(id)}
-                    disabled={isSaving}
-                    className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-md font-medium transition-colors"
-                >
-                    {isSaving ? 'Saving...' : 'Save Infrastructure'}
-                </button>
+                <PermissionGate permission="campaigns:write">
+                    <button 
+                        onClick={() => saveCampaign(id)}
+                        disabled={isSaving}
+                        className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-md font-medium transition-colors"
+                    >
+                        {isSaving ? 'Saving...' : 'Save Infrastructure'}
+                    </button>
+                </PermissionGate>
             </div>
         </div>
     );

@@ -3,6 +3,7 @@ import { roleApi } from '../services/roleApi';
 import { Shield, MoreHorizontal, Settings, Users } from 'lucide-react';
 import { useState } from 'react';
 import RoleForm from '../components/RoleForm';
+import PermissionGate from '../../../components/auth/PermissionGate';
 
 export default function RoleTable() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -30,12 +31,14 @@ export default function RoleTable() {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <button 
-          onClick={() => setIsFormOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2"
-        >
-          <Shield size={16} /> Create Custom Role
-        </button>
+        <PermissionGate permission="roles:create">
+          <button 
+            onClick={() => setIsFormOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2"
+          >
+            <Shield size={16} /> Create Custom Role
+          </button>
+        </PermissionGate>
       </div>
 
       <RoleForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />

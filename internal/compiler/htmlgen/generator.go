@@ -198,6 +198,8 @@ document.body.appendChild(img);img.style.display='none';
 		scrollDepthScript = generateScrollDepthScript(trackingEndpoint, tokenParam)
 	}
 
+	baseCSS := `body{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;}*,*:before,*:after{box-sizing:inherit;}img{max-width:100%;height:auto;}input,select,textarea{display:block;width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-family:inherit;font-size:14px;}button{font-family:inherit;cursor:pointer;}form{display:flex;flex-direction:column;gap:12px;}`
+
 	pageHTML := fmt.Sprintf(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -205,6 +207,7 @@ document.body.appendChild(img);img.style.display='none';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>%s</title>
 %s%s    <style>%s</style>
+    <style>%s</style>
     <style>%s</style>
 %s</head>
 <body>
@@ -225,6 +228,7 @@ document.body.appendChild(img);img.style.display='none';
 		html.EscapeString(title),
 		faviconTag,
 		metaTags.String(),
+		baseCSS,
 		globalStyles,
 		pageStyles,
 		responsiveCSS.String(),
@@ -477,17 +481,17 @@ func renderProductionComponent(w *strings.Builder, comp any, depth int, config P
 		content, _ := props["content"].(string)
 		w.WriteString(fmt.Sprintf("%s<%s%s>%s</%s>\n", indent, level, attrs, html.EscapeString(content), level))
 
-	case "paragraph":
+	case "paragraph", "text", "span":
+		tag := cType
+		if tag == "text" || tag == "span" {
+			tag = "span"
+		} else {
+			tag = "p"
+		}
+		mergedStyle := mergeStyles("white-space:pre-wrap;", inlineStyle)
+		textAttrs := buildAttrsWithCompID(id, cssClass, mergedStyle, compID)
 		content, _ := props["content"].(string)
-		w.WriteString(fmt.Sprintf("%s<p%s>%s</p>\n", indent, attrs, html.EscapeString(content)))
-
-	case "text":
-		content, _ := props["content"].(string)
-		w.WriteString(fmt.Sprintf("%s<span%s>%s</span>\n", indent, attrs, html.EscapeString(content)))
-
-	case "span":
-		content, _ := props["content"].(string)
-		w.WriteString(fmt.Sprintf("%s<span%s>%s</span>\n", indent, attrs, html.EscapeString(content)))
+		w.WriteString(fmt.Sprintf("%s<%s%s>%s</%s>\n", indent, tag, textAttrs, html.EscapeString(content), tag))
 
 	case "label":
 		content, _ := props["content"].(string)

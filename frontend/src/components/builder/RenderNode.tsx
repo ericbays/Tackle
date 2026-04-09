@@ -1,6 +1,4 @@
 import React from 'react';
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { type ComponentNode } from '../../types/builder';
 import { useBuilderStore } from '../../store/builderStore';
 
@@ -11,144 +9,283 @@ interface RenderNodeProps {
 export const RenderNode: React.FC<RenderNodeProps> = ({ node }) => {
     const selectedNodeIds = useBuilderStore(state => state.selectedNodeIds);
     const setSelectedNodes = useBuilderStore(state => state.setSelectedNodes);
+    const activePageId = useBuilderStore(state => state.activePageId);
 
-    const isSelected = selectedNodeIds.includes(node.id);
+    const activeNativeDragItem = useBuilderStore(state => state.activeNativeDragItem);
+    const setActiveNativeDragItem = useBuilderStore(state => state.setActiveNativeDragItem);
+    const currentDropIndicator = useBuilderStore(state => state.currentDropIndicator);
+    const setCurrentDropIndicator = useBuilderStore(state => state.setCurrentDropIndicator);
+
+    const addNode = useBuilderStore(state => state.addNode);
+    const moveNode = useBuilderStore(state => state.moveNode);
+
+    const isSelected = selectedNodeIds.includes(node.component_id);
+    const isRoot = node.component_id === 'root-1';
 
     // Droppable target if it's a layout element
-    const isContainer = ['Container', 'Grid', 'Columns', 'Column', 'Form Container'].includes(node.type);
-    
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({
-        id: node.id,
-        disabled: node.isLocked,
-        data: {
-            acceptsChildren: isContainer,
-            type: node.type
-        }
-    });
+    const isContainer = ['container', 'row', 'column', 'section', 'card', 'navbar', 'footer', 'sidebar', 'tabs', 'form'].includes(node.type);
 
     const handleClick = (e: React.MouseEvent) => {
-        e.stopPropagation(); // prevent parent selection
-        setSelectedNodes([node.id]);
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedNodes([node.component_id]);
     };
 
-    // Base CSS for rendering inside the iframe.
+    const handleDragStart = (e: React.DragEvent<HTMLElement>) => {
+        if (isRoot) {
+            e.preventDefault();
+            return;
+        }
+        e.stopPropagation();
+
+        const payload = {
+            id: node.component_id,
+            type: node.type,
+            isPaletteOriginal: false
+        };
+        e.dataTransfer.setData('application/json', JSON.stringify(payload));
+        e.dataTransfer.effectAllowed = 'move';
+        setActiveNativeDragItem(payload);
+    };
+
+    const handleDragEnd = (e: React.DragEvent<HTMLElement>) => {
+        e.stopPropagation();
+        setActiveNativeDragItem(null);
+        setCurrentDropIndicator(null);
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLElement>) => {
+        if (!activeNativeDragItem || activeNativeDragItem.id === node.component_id) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        let pos: 'top' | 'bottom' | 'left' | 'right' | 'inside' = 'bottom';
+
+        if (isRoot) {
+            // The root page container engulfs everything, nesting is the only option here.
+            pos = 'inside';
+        } else {
+            // Use strict, fixed pixel hitboxes for edges to prioritize nesting ease
+            const thresholdX = 15;
+            const thresholdY = 15;
+
+            if (y < thresholdY) pos = 'top';
+            else if (y > rect.height - thresholdY) pos = 'bottom';
+            else if (x < thresholdX) pos = 'left';
+            else if (x > rect.width - thresholdX) pos = 'right';
+            else pos = isContainer ? 'inside' : 'bottom';
+        }
+
+        if (currentDropIndicator?.nodeId !== node.component_id || currentDropIndicator?.position !== pos) {
+            setCurrentDropIndicator({ nodeId: node.component_id, position: pos });
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!currentDropIndicator || currentDropIndicator.nodeId !== node.component_id) {
+            setCurrentDropIndicator(null);
+            // If dragging from palette, clear state so it doesn't get stuck
+            if (activeNativeDragItem?.isPaletteOriginal) {
+                setActiveNativeDragItem(null);
+            }
+            return;
+        }
+
+        const position = currentDropIndicator.position;
+        const payloadRaw = e.dataTransfer.getData('application/json');
+
+        if (payloadRaw) {
+            try {
+                const payload = JSON.parse(payloadRaw);
+                if (payload.type && activePageId) {
+                    if (payload.isPaletteOriginal) {
+                        addNode(activePageId, node.component_id, payload.type, position);
+                    } else if (payload.id !== node.component_id) {
+                        moveNode(activePageId, payload.id, node.component_id, position);
+                    }
+                }
+            } catch (err) {
+                console.error("Invalid drop payload", err);
+            }
+        }
+
+        setCurrentDropIndicator(null);
+        setActiveNativeDragItem(null);
+    };
+
     let ComponentTag: any = 'div';
     let baseClassName = '';
 
     switch (node.type) {
-        case 'Heading':
-            ComponentTag = node.props.level || 'h2';
-            baseClassName = 'font-bold text-slate-900';
+        case 'heading':
+            ComponentTag = node.properties?.level || 'h2';
+            baseClassName = 'font-bold text-slate-800 text-2xl';
             break;
-        case 'Paragraph':
+        case 'paragraph':
+        case 'text':
             ComponentTag = 'p';
-            baseClassName = 'text-slate-600 leading-relaxed';
+            baseClassName = 'text-slate-600 leading-relaxed whitespace-pre-wrap';
             break;
-        case 'Submit Button':
-        case 'Button':
+        case 'submit_button':
+        case 'button':
             ComponentTag = 'button';
-            baseClassName = 'bg-blue-600 text-white font-medium rounded-md px-4 py-2.5 hover:bg-blue-700 transition cursor-pointer shadow-sm';
+            baseClassName = 'bg-blue-600 text-white font-medium rounded-md px-5 py-2 hover:bg-blue-700 transition shadow-sm w-fit';
             break;
-        case 'Container':
-            baseClassName = 'w-full min-h-[50px] flex flex-col gap-2';
+        case 'container':
+        case 'section':
+            baseClassName = 'w-full flex flex-col';
             break;
-        case 'Form Container':
+        case 'column':
+            baseClassName = 'flex-1 min-w-[120px] flex flex-col';
+            break;
+        case 'row':
+            baseClassName = 'w-full flex flex-row items-start flex-wrap';
+            break;
+        case 'form':
             ComponentTag = 'form';
-            baseClassName = 'w-full min-h-[50px] flex flex-col gap-4 bg-white p-6 shadow-sm rounded-lg border border-slate-200';
+            baseClassName = 'w-full flex flex-col bg-white rounded-xl shadow-sm border border-slate-200';
             break;
-        case 'Grid':
-            baseClassName = 'w-full min-h-[50px] grid grid-cols-1 md:grid-cols-2 gap-4';
-            break;
-        case 'Columns':
-            baseClassName = 'w-full min-h-[50px] flex flex-col md:flex-row gap-4';
-            break;
-        case 'Image':
+        case 'image':
             ComponentTag = 'img';
             baseClassName = 'max-w-full h-auto rounded';
             break;
-        case 'Text Input':
-        case 'Email Input':
-        case 'Password Input':
+        case 'text_input':
+        case 'email_input':
+        case 'password_input':
             ComponentTag = 'input';
-            baseClassName = 'border border-slate-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder:text-slate-400';
+            baseClassName = 'border border-slate-300 rounded-lg px-4 py-2.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder:text-slate-400 bg-slate-50 pointer-events-none';
+            break;
+        default:
+            baseClassName = 'flex flex-col';
             break;
     }
 
-    // Merge standard style and tailwind classes
-    // We add explicitly transition-all so margin/padding scrubbing is smooth.
+    // Builder Visual Bounding Boxes & Outlines
+    let builderClasses = 'relative group transition-all duration-150 outline-offset-[-1px] ';
+
+    if (!isRoot) {
+        if (isContainer) {
+            // Structural layout constraints strictly for the builder UX
+            builderClasses += 'p-4 pt-8 gap-4 min-h-[100px] min-w-[100px] outline outline-1 outline-slate-300 outline-dashed hover:outline-blue-400 hover:bg-blue-50/5 ';
+        } else {
+            // Leaf node constraints
+            builderClasses += 'p-2 hover:outline outline-1 outline-blue-300 outline-dashed hover:bg-blue-50/5 ';
+        }
+    }
+
+    if (isSelected && !isRoot) {
+        builderClasses += 'outline outline-2 outline-blue-500 z-10 bg-blue-50/5 shadow-sm ';
+    }
+
+    const isActiveTarget = currentDropIndicator?.nodeId === node.component_id;
+    if (isActiveTarget) {
+        const pos = currentDropIndicator.position;
+        if (pos === 'top') builderClasses += '!border-t-4 !border-t-blue-500 rounded-none z-20 shadow-lg ';
+        if (pos === 'bottom') builderClasses += '!border-b-4 !border-b-blue-500 rounded-none z-20 shadow-lg ';
+        if (pos === 'left') builderClasses += '!border-l-4 !border-l-blue-500 rounded-none z-20 shadow-lg ';
+        if (pos === 'right') builderClasses += '!border-r-4 !border-r-blue-500 rounded-none z-20 shadow-lg ';
+        if (pos === 'inside') builderClasses += '!outline-4 !outline-blue-500 !bg-blue-100/30 z-20 shadow-lg ';
+    }
+
     const combinedStyle = {
-        ...node.style,
+        ...(node.properties?.style || {}),
         position: 'relative' as any,
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.3 : 1,
-        ...(isSelected ? { outline: '2px solid #38bdf8', outlineOffset: '-2px' } : {})
+        opacity: activeNativeDragItem?.id === node.component_id ? 0.4 : 1,
     };
 
-    const isImage = node.type === 'Image';
+    const isImage = node.type === 'image' || node.type === 'logo';
+    const isInput = ComponentTag === 'input';
+    const isVoidElement = isImage || isInput;
 
     const propsWithText = {
-        ...node.props,
-        ...(ComponentTag === 'input' && { 
-            type: node.type === 'Email Input' ? 'email' : node.type === 'Password Input' ? 'password' : 'text',
-            placeholder: node.props.placeholder,
-            readOnly: true // prevent typing inside builder
+        ...node.properties,
+        ...(isInput && {
+            type: node.type === 'email_input' ? 'email' : node.type === 'password_input' ? 'password' : 'text',
+            placeholder: node.properties?.placeholder,
+            readOnly: true
         })
     };
 
-    const innerContent = ['Heading', 'Paragraph', 'Button', 'Submit Button'].includes(node.type) 
-        ? node.props.text 
+    const innerContent = ['heading', 'paragraph', 'text', 'button', 'submit_button'].includes(node.type)
+        ? node.properties?.text || node.type
         : null;
 
-    if (ComponentTag === 'input') {
+    const Badge = () => {
+        if (isRoot) return null;
+
+        let badgeColor = 'bg-blue-500/90 text-white';
+        let badgeBorder = '';
+        if (isContainer) {
+            badgeColor = 'bg-slate-700/90 text-white';
+        }
+        if (isSelected) {
+            badgeColor = 'bg-blue-600 text-white';
+        }
+
         return (
-            <div className="relative group cursor-pointer w-full" onClick={handleClick}>
-                <ComponentTag 
-                    className={baseClassName}
-                    style={combinedStyle}
-                    {...propsWithText}
-                />
+            <div className={`absolute top-0 left-0 ${badgeColor} ${badgeBorder} text-[9px] uppercase tracking-[0.05em] font-semibold px-2 py-0.5 rounded-br-md z-30 pointer-events-none whitespace-nowrap backdrop-blur-sm transition-all ${isSelected ? 'flex' : 'hidden group-hover:flex'}`}>
+                {node.properties?.component_name || node.type}
+            </div>
+        );
+    };
+
+    if (isVoidElement) {
+        return (
+            <div
+                className={`relative inline-block ${builderClasses}`}
+                onClick={handleClick}
+                draggable={!isRoot}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                style={{ position: 'relative', opacity: combinedStyle.opacity, width: combinedStyle.width || '100%', flex: combinedStyle.flex }}
+            >
+                <Badge />
+                {isImage ? (
+                    <img
+                        src={node.properties?.src || 'https://placehold.co/600x400/e2e8f0/64748b?text=Placeholder+Image'}
+                        alt={node.properties?.alt || 'Placeholder'}
+                        className={`w-full h-full ${baseClassName}`}
+                        style={combinedStyle}
+                    />
+                ) : (
+                    <input
+                        type={node.type === 'email_input' ? 'email' : node.type === 'password_input' ? 'password' : 'text'}
+                        placeholder={node.properties?.placeholder || 'Enter text...'}
+                        className={`w-full h-full ${baseClassName}`}
+                        style={combinedStyle}
+                        readOnly
+                    />
+                )}
             </div>
         );
     }
 
-    if (isImage) {
-        return (
-             <div className="relative group cursor-pointer" onClick={handleClick}>
-                 <ComponentTag 
-                     className={baseClassName}
-                     style={combinedStyle}
-                     src={node.props.src || 'https://placehold.co/600x400/e2e8f0/64748b?text=Placeholder+Image'}
-                     alt={node.props.alt || 'Placeholder'}
-                 />
-             </div>
-        );
-    }
-
     return (
-        <ComponentTag 
-            ref={setNodeRef}
-            {...attributes}
-            {...(node.id === 'root-1' ? {} : listeners)}
-            className={`${baseClassName} relative group cursor-pointer transition-all ${isContainer ? 'empty:min-h-[80px] empty:bg-slate-50 border border-transparent hover:border-slate-300 empty:border-dashed empty:border-slate-300 empty:bg-slate-50/50 flex flex-col' : ''}`}
+        <ComponentTag
+            className={`${baseClassName} ${builderClasses}`}
             style={combinedStyle}
             onClick={handleClick}
+            draggable={!isRoot}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
         >
+            <Badge />
             {innerContent}
-            {isContainer && (
-                <SortableContext items={node.children?.map(c => c.id) || []} strategy={verticalListSortingStrategy}>
-                    {node.children?.map(child => (
-                        <RenderNode key={child.id} node={child} />
-                    ))}
-                </SortableContext>
-            )}
+            {isContainer && node.children?.map(child => (
+                <RenderNode key={child.component_id} node={child} />
+            ))}
         </ComponentTag>
     );
 };

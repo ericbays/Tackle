@@ -1,5 +1,5 @@
-import { useDraggable } from '@dnd-kit/core';
 import { type ComponentType } from '../../types/builder';
+import { useBuilderStore } from '../../store/builderStore';
 import { Type, Square, Layout, List, FormInput, MousePointerClick, Image as ImageIcon } from 'lucide-react';
 
 interface PaletteItemProps {
@@ -12,44 +12,56 @@ const PALETTE_GROUPS: { name: string, items: PaletteItemProps[] }[] = [
     {
         name: 'Layout',
         items: [
-            { type: 'Container', label: 'Container', icon: <Square className="w-5 h-5" /> },
-            { type: 'Grid', label: 'Grid', icon: <Layout className="w-5 h-5" /> },
-            { type: 'Columns', label: 'Columns', icon: <List className="w-5 h-5" /> },
+            { type: 'container', label: 'Container', icon: <Square className="w-5 h-5" /> },
+            { type: 'row', label: 'Row', icon: <Layout className="w-5 h-5" /> },
+            { type: 'column', label: 'Column', icon: <List className="w-5 h-5" /> },
+            { type: 'divider', label: 'Divider', icon: <List className="w-5 h-5" /> },
         ]
     },
     {
         name: 'Content',
         items: [
-            { type: 'Heading', label: 'Heading', icon: <Type className="w-5 h-5" /> },
-            { type: 'Paragraph', label: 'Paragraph', icon: <Type className="w-5 h-5" /> },
-            { type: 'Image', label: 'Image', icon: <ImageIcon className="w-5 h-5" /> },
+            { type: 'heading', label: 'Heading', icon: <Type className="w-5 h-5" /> },
+            { type: 'paragraph', label: 'Paragraph', icon: <Type className="w-5 h-5" /> },
+            { type: 'image', label: 'Image', icon: <ImageIcon className="w-5 h-5" /> },
         ]
     },
     {
         name: 'Forms',
         items: [
-            { type: 'Form Container', label: 'Form', icon: <FormInput className="w-5 h-5" /> },
-            { type: 'Text Input', label: 'Input', icon: <FormInput className="w-5 h-5" /> },
-            { type: 'Submit Button', label: 'Button', icon: <MousePointerClick className="w-5 h-5" /> },
+            { type: 'form', label: 'Form', icon: <FormInput className="w-5 h-5" /> },
+            { type: 'text_input', label: 'Input', icon: <FormInput className="w-5 h-5" /> },
+            { type: 'submit_button', label: 'Button', icon: <MousePointerClick className="w-5 h-5" /> },
         ]
     }
 ];
 
 const DraggableItem = ({ item }: { item: PaletteItemProps }) => {
-    // Generate a unique ID for the palette source drag
-    const { attributes, listeners, setNodeRef } = useDraggable({
-        id: `palette-${item.type}`,
-        data: {
-            isPaletteOriginal: true,
-            type: item.type
-        }
-    });
+    const setActiveNativeDragItem = useBuilderStore(state => state.setActiveNativeDragItem);
+    const setCurrentDropIndicator = useBuilderStore(state => state.setCurrentDropIndicator);
+
+    const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+        const payload = {
+            id: `palette-${item.type}`,
+            type: item.type,
+            isPaletteOriginal: true
+        };
+        e.dataTransfer.setData('application/json', JSON.stringify(payload));
+        e.dataTransfer.effectAllowed = 'copy';
+        
+        setActiveNativeDragItem(payload);
+    };
+
+    const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+        setActiveNativeDragItem(null);
+        setCurrentDropIndicator(null);
+    };
 
     return (
         <div 
-            ref={setNodeRef} 
-            {...listeners} 
-            {...attributes}
+            draggable={true}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
             className="flex flex-col items-center justify-center p-3 cursor-grab bg-slate-900 border border-slate-700 rounded-md hover:bg-slate-800 hover:border-slate-600 transition-colors"
         >
             <div className="text-slate-400 mb-2">{item.icon}</div>

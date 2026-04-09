@@ -1,6 +1,7 @@
 import { Plus, X, Users, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useCampaignStore } from '../../../store/campaignStore';
+import PermissionGate from '../../../components/auth/PermissionGate';
 
 
 
@@ -102,13 +103,15 @@ export default function TargetsTab() {
             </section>
 
             <div className="flex justify-end pt-4">
-                <button 
-                    onClick={() => saveCampaign(id)}
-                    disabled={isSaving}
-                    className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-md font-medium transition-colors"
-                >
-                    {isSaving ? 'Saving...' : 'Save Targets'}
-                </button>
+                <PermissionGate permission="campaigns:write">
+                    <button 
+                        onClick={() => saveCampaign(id)}
+                        disabled={isSaving}
+                        className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-md font-medium transition-colors"
+                    >
+                        {isSaving ? 'Saving...' : 'Save Targets'}
+                    </button>
+                </PermissionGate>
             </div>
         </div>
     );
