@@ -1,6 +1,6 @@
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { LayoutDashboard, Target, Server, Mail, FileCode2, Users, LogOut, Send, Contact } from 'lucide-react';
+import { LayoutDashboard, Target, Server, Mail, FileCode2, Users, LogOut, Send, Contact, Activity } from 'lucide-react';
 import { GlobalSearch } from '../components/GlobalSearch';
 export default function AppShell() {
   const logout = useAuthStore((state) => state.logout);
@@ -21,6 +21,7 @@ export default function AppShell() {
           <NavLink to="/landing-pages" className={({isActive}) => `flex items-center gap-3 p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}><FileCode2 className="w-5 h-5" />Landing Applications</NavLink>
           <NavLink to="/smtp-profiles" className={({isActive}) => `flex items-center gap-3 p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}><Send className="w-5 h-5" />SMTP Profiles</NavLink>
           <NavLink to="/users" className={({isActive}) => `flex items-center gap-3 p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}><Users className="w-5 h-5" />Users & Roles</NavLink>
+          <NavLink to="/logs" className={({isActive}) => `flex items-center gap-3 p-3 rounded-md transition-all ${isActive ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}><Activity className="w-5 h-5" />Global Logs</NavLink>
         </nav>
         <div className="p-4 border-t border-slate-800 border-opacity-50">
           <button onClick={logout} className="w-full flex items-center gap-3 text-left p-3 rounded-md text-red-400 hover:bg-slate-800 transition-colors"><LogOut className="w-5 h-5" />Log out</button>

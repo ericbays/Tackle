@@ -17,6 +17,7 @@ import (
 	"tackle/internal/logger"
 	"tackle/internal/migrations"
 	"tackle/internal/server"
+	"tackle/internal/services/applog"
 	auditsvc "tackle/internal/services/audit"
 	"tackle/internal/workers"
 )
@@ -34,7 +35,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	log := logger.New(cfg.IsDevelopment())
+	log, omnibusHook := logger.New(cfg.IsDevelopment())
 
 	// Decode and validate the master encryption key.
 	// TACKLE_ENCRYPTION_KEY must be a 64-character hex string (32 bytes).
@@ -58,6 +59,11 @@ func main() {
 		os.Exit(1)
 	}
 	defer db.Close()
+
+	// Initialize the Omnibus Application Logger and hook it into slog.
+	appLogSvc := applog.NewAppLogService(db)
+	defer appLogSvc.Drain()
+	omnibusHook.HookAppLogService(appLogSvc)
 
 	migrationsPath := resolveMigrationsPath()
 
@@ -116,7 +122,7 @@ func main() {
 		return
 	}
 
-	srv, auditSvc := server.New(cfg, db, masterKey, log)
+	srv, auditSvc := server.New(cfg, db, masterKey, log, appLogSvc)
 
 	// Set migration callback so migrations are audit-logged.
 	migrations.SetMigrationCallback(func(version uint, direction string) {

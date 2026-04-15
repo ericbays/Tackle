@@ -16,6 +16,7 @@ import EngineeringPage from './features/engineering/pages/EngineeringPage';
 import SMTPProfileList from './pages/smtp-profiles/SMTPProfileList';
 import SMTPProfileEditor from './pages/smtp-profiles/SMTPProfileEditor';
 import TargetManagementPage from './pages/targets/TargetManagementPage';
+import GlobalLogsPage from './pages/logs/GlobalLogsPage';
 import { Toaster } from 'react-hot-toast';
 
 const queryClient = new QueryClient();
@@ -70,6 +71,7 @@ function App() {
               <Route path="/targets" element={<TargetManagementPage />} />
               <Route path="/smtp-profiles" element={<SMTPProfileList />} />
               <Route path="/smtp-profiles/:id" element={<SMTPProfileEditor />} />
+              <Route path="/logs" element={<GlobalLogsPage />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>

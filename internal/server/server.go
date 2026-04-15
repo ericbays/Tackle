@@ -42,6 +42,7 @@ import (
 	lphandlers "tackle/internal/handlers/landingpages"
 	metricshandlers "tackle/internal/handlers/metrics"
 	notifhandlers "tackle/internal/handlers/notification"
+	"tackle/internal/handlers/omnibuslogs"
 	permhandlers "tackle/internal/handlers/permissions"
 	reporthandlers "tackle/internal/handlers/reports"
 	rolehandlers "tackle/internal/handlers/roles"
@@ -56,6 +57,7 @@ import (
 	"tackle/internal/providers/credentials"
 	"tackle/internal/repositories"
 	apikeysvc "tackle/internal/services/apikey"
+	"tackle/internal/services/applog"
 	auditsvc "tackle/internal/services/audit"
 	authsvc "tackle/internal/services/auth"
 	authprovsvc "tackle/internal/services/authprovider"
@@ -94,8 +96,8 @@ const (
 )
 
 // New creates and returns a configured HTTP server and the audit service for system event logging.
-func New(cfg *config.Config, db *sql.DB, masterKey []byte, logger *slog.Logger) (*http.Server, *auditsvc.AuditService) {
-	r, auditService := buildRouter(cfg, db, masterKey, logger)
+func New(cfg *config.Config, db *sql.DB, masterKey []byte, logger *slog.Logger, appLogSvc *applog.AppLogService) (*http.Server, *auditsvc.AuditService) {
+	r, auditService := buildRouter(cfg, db, masterKey, logger, appLogSvc)
 	srv := &http.Server{
 		Addr:         cfg.ListenAddr,
 		Handler:      r,
@@ -267,7 +269,7 @@ func (a *blocklistCheckerAdapter) CheckEmail(ctx context.Context, email string) 
 	}, nil
 }
 
-func buildRouter(cfg *config.Config, db *sql.DB, masterKey []byte, logger *slog.Logger) (http.Handler, *auditsvc.AuditService) { //nolint:funlen
+func buildRouter(cfg *config.Config, db *sql.DB, masterKey []byte, logger *slog.Logger, appLogSvc *applog.AppLogService) (http.Handler, *auditsvc.AuditService) { //nolint:funlen
 	r := chi.NewRouter()
 
 	// Separate rate-limit stores per traffic class (REQ-API-015, REQ-API-016).
@@ -365,6 +367,7 @@ func buildRouter(cfg *config.Config, db *sql.DB, masterKey []byte, logger *slog.
 	}
 
 	settingsDeps := &settingshandlers.Deps{DB: db, AuditSvc: auditService}
+	omnibusDeps := &omnibuslogs.Deps{DB: db}
 
 	// Domain provider connections (Phase 2 - Domain Track).
 	credEncSvc, err := credentials.NewEncryptionService(masterKey)
@@ -378,6 +381,9 @@ func buildRouter(cfg *config.Config, db *sql.DB, masterKey []byte, logger *slog.
 	hub := notifsvc.NewHub()
 	go hub.Run()
 	auditService.SetBroadcaster(hub)
+	if appLogSvc != nil {
+		appLogSvc.SetBroadcaster(hub)
+	}
 	notifSvc := notifsvc.NewNotificationService(db, hub)
 	notifEncSvc, err := crypto.NewEncryptionServiceForPurpose(masterKey, "tackle/notification-credentials")
 	if err != nil {
@@ -1092,6 +1098,9 @@ func buildRouter(cfg *config.Config, db *sql.DB, masterKey []byte, logger *slog.
 			r.With(readRL, requirePerm("campaigns:read")).Get("/reports/{id}", reportDeps.GetReport)
 			r.With(readRL, requirePerm("campaigns:read")).Get("/reports/{id}/download", reportDeps.DownloadReport)
 			r.With(writeRL, requirePerm("campaigns:delete")).Delete("/reports/{id}", reportDeps.DeleteReport)
+
+			// -- Omnibus Logging System --
+			r.With(readRL, requirePerm("system:read")).Get("/logs/omnibus", omnibusDeps.List)
 
 			// Notification endpoints (any authenticated user — own data).
 			r.With(readRL).Get("/notifications", notifDeps.List)
