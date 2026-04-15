@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@remix-run/router@1.16.1/dist/router.umd.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-router@6.23.1/dist/umd/react-router.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-router-dom@6.23.1/dist/umd/react-router-dom.production.min.js" crossorigin></script>
+    
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            alert("JS Error: " + msg);
+            document.body.innerHTML = "<h1>ERROR</h1><p>" + msg + "</p>";
+        };
+    </script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module">
+        var { BrowserRouter, Routes, Route } = ReactRouterDOM;
+        function Page0() {
+            return React.createElement(React.Fragment, null, React.createElement("div", { style: { "backgroundColor": "#ff0000", "minHeight": "100vh", "padding": "2rem" } }, "HELLO TACKLE"));
+        }
+        function App() {
+            return React.createElement(BrowserRouter, null, React.createElement(Routes, null, React.createElement(Route, { path: "/", element: React.createElement(Page0, null) })));
+        }
+        var { createRoot } = ReactDOM;
+        var root = createRoot(document.getElementById("root"));
+        root.render(React.createElement(App, null));
+    </script>
+</body>
+</html>

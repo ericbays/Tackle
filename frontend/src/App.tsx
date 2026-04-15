@@ -13,6 +13,9 @@ import EmailTemplateEditor from './pages/email-templates/EmailTemplateEditor';
 import LandingPageList from './pages/landing-pages/LandingPageList';
 import UserManagementPage from './features/users/pages/UserManagementPage';
 import EngineeringPage from './features/engineering/pages/EngineeringPage';
+import SMTPProfileList from './pages/smtp-profiles/SMTPProfileList';
+import SMTPProfileEditor from './pages/smtp-profiles/SMTPProfileEditor';
+import TargetManagementPage from './pages/targets/TargetManagementPage';
 import { Toaster } from 'react-hot-toast';
 
 const queryClient = new QueryClient();
@@ -64,6 +67,9 @@ function App() {
               <Route path="/landing-pages" element={<LandingPageList />} />
               <Route path="/engineering" element={<EngineeringPage />} />
               <Route path="/users" element={<UserManagementPage />} />
+              <Route path="/targets" element={<TargetManagementPage />} />
+              <Route path="/smtp-profiles" element={<SMTPProfileList />} />
+              <Route path="/smtp-profiles/:id" element={<SMTPProfileEditor />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>

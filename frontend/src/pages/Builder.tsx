@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Monitor, Smartphone, Tablet, ZoomIn, ZoomOut, Save, Play, Loader2, Undo2, Redo2, Blocks, Network, Layers } from 'lucide-react';
+import { ArrowLeft, Monitor, Smartphone, Tablet, ZoomIn, ZoomOut, Save, Play, Loader2, Undo2, Redo2, Blocks, Network, Layers, ChevronDown, Radio } from 'lucide-react';
 import { useBuilderStore } from '../store/builderStore';
 import { Canvas } from '../components/builder/Canvas';
 import { ComponentPalette } from '../components/builder/ComponentPalette';
@@ -38,6 +38,10 @@ export default function Builder() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
+  
+  const [activeDevUrl, setActiveDevUrl] = useState<string | null>(null);
+  const [devServerStatus, setDevServerStatus] = useState<'offline' | 'starting' | 'online'>('offline');
+  const [showDeployMenu, setShowDeployMenu] = useState(false);
 
   // Load from real DB API
   useEffect(() => {
@@ -79,6 +83,21 @@ export default function Builder() {
                     loadProject(fetchedProject);
                 }
             }
+            
+            // Hydrate Dev Server Status
+            if (id && id !== 'new') {
+                try {
+                    const statusRes = await api.get(`/landing-pages/${id}/dev-server/status`);
+                    const statusData = statusRes.data?.data || statusRes.data;
+                    if (statusData && statusData.status === 'online') {
+                        setDevServerStatus('online');
+                        setActiveDevUrl(statusData.url_b || statusData.url);
+                    } else if (statusData && (statusData.status === 'starting' || statusData.status === 'pending')) {
+                        setDevServerStatus('starting');
+                    }
+                } catch(e) {}
+            }
+            
         } catch (err) {
             console.error('Failed to parse landing page:', err);
         } finally {
@@ -88,6 +107,63 @@ export default function Builder() {
 
     fetchPage();
   }, [id, loadProject]);
+
+  // Dev Server Sync - HMR Broadcast Pipeline
+  // Pushes structural logic natively backwards into the React App Compiler without requiring Save + Build
+  useEffect(() => {
+    if (!project?.definition_json || id === 'new' || devServerStatus !== 'online') return;
+    
+    const timeoutId = setTimeout(async () => {
+        try {
+            // Push to the Go Context Engine via the Sync endpoint to trigger ESBuild Recompilation + Socket Broadcast
+            const payload = {
+                ...project.definition_json,
+                pages: project.definition_json.pages.map((page: any) => ({
+                    ...page,
+                    component_tree: serializeComponentTree(page.component_tree || [])
+                }))
+            };
+            await api.post(`/landing-pages/${id}/dev-server/sync`, payload);
+        } catch (err) {
+            // Intentionally silent; if standard DevServer isn't running it safely drops it
+        }
+    }, 600); // 600ms debounce
+    
+    return () => clearTimeout(timeoutId);
+  }, [project?.definition_json, id, devServerStatus]);
+
+  // Dev Server Polling during Startup
+  useEffect(() => {
+      let interval: NodeJS.Timeout;
+      if (devServerStatus === 'starting' && id && id !== 'new') {
+          interval = setInterval(async () => {
+              try {
+                  const res = await api.get(`/landing-pages/${id}/dev-server/status`);
+                  const data = res.data?.data || res.data;
+                  if (data?.status === 'online') {
+                      setDevServerStatus('online');
+                      setActiveDevUrl(data.url_b || data.url);
+                      toast.success('Development Server Registered & Online!', { id: 'dev-deploy' });
+                      clearInterval(interval);
+                      
+                      // Auto-open live preview once online
+                      if (data.url_b || data.url) {
+                          window.open(data.url_b || data.url, '_blank');
+                      }
+                  } else if (data?.status === 'offline') {
+                      setDevServerStatus('offline');
+                      toast.error('Development Server failed to start', { id: 'dev-deploy' });
+                      clearInterval(interval);
+                  }
+              } catch (err) {
+                  // Ignore to keep polling
+              }
+          }, 2000);
+      }
+      return () => {
+          if (interval) clearInterval(interval);
+      };
+  }, [devServerStatus, id]);
 
   // Serializer to safely map UI properties (React 'style' object, 'text') to Backend Compiler format ('inline_style', 'content')
   const serializeComponentTree = (nodes: any[]): any[] => {
@@ -140,11 +216,11 @@ export default function Builder() {
               
               if (close) {
                   await queryClient.invalidateQueries({ queryKey: ['landing-pages'] });
-                  toast.success('Project created successfully!');
+                  toast.success('Application created successfully!');
                   navigate('/landing-pages');
               } else {
                   navigate(`/builder/${newId}`, { replace: true });
-                  toast.success('Project created successfully!');
+                  toast.success('Application created successfully!');
               }
               return newId;
           } else {
@@ -157,16 +233,16 @@ export default function Builder() {
               setLastSavedIndex(useBuilderStore.getState().historyIndex);
               if (close) {
                   await queryClient.invalidateQueries({ queryKey: ['landing-pages'] });
-                  toast.success('Project saved successfully!');
+                  toast.success('Application saved successfully!');
                   navigate('/landing-pages');
               } else {
-                  toast.success('Project saved successfully!');
+                  toast.success('Application saved successfully!');
               }
               return currentProject.id;
           }
       } catch (error) {
-          console.error('Failed to save project', error);
-          toast.error('Failed to save project. Ensure your backend is running.');
+          console.error('Failed to save application', error);
+          toast.error('Failed to save application. Ensure your backend is running.');
           return null;
       }
   };
@@ -180,21 +256,29 @@ export default function Builder() {
   };
 
   const executePreview = async (projectId: string) => {
-      const toastId = toast.loading('Compiling preview...');
+      setDevServerStatus('starting');
+      toast.loading('Starting Development Deployment...', { id: 'dev-deploy' });
       try {
-          const res = await api.post(`/landing-pages/${projectId}/preview`, { page_index: 0 }, { responseType: 'text' });
-          toast.success('Preview ready!', { id: toastId });
-          const newWindow = window.open('about:blank', '_blank');
-          if (newWindow) {
-              newWindow.document.open();
-              newWindow.document.write(res.data);
-              newWindow.document.close();
-          } else {
-              toast.error('Preview generated but popup blocked. Allow popups and try again.', { id: toastId });
-          }
+          // Fire and forget; the polling useEffect handles UX transitions
+          await api.post(`/landing-pages/${projectId}/dev-server/start`);
       } catch (err) {
           console.error(err);
-          toast.error('Failed to compile preview', { id: toastId });
+          setDevServerStatus('offline');
+          toast.error('Failed to start development deployment', { id: 'dev-deploy' });
+      }
+  };
+
+  const stopDevServer = async () => {
+      if (id === 'new') return;
+      const toastId = toast.loading('Stopping Development Server...');
+      try {
+          await api.post(`/landing-pages/${id}/dev-server/stop`);
+          setDevServerStatus('offline');
+          setActiveDevUrl(null);
+          toast.success('Development Server Stopped', { id: toastId });
+      } catch (err) {
+          console.error(err);
+          toast.error('Failed to stop development server', { id: toastId });
       }
   };
 
@@ -301,14 +385,55 @@ export default function Builder() {
                     </div>
 
                     <div className="flex items-center gap-3">
+                        {devServerStatus === 'online' && activeDevUrl && (
+                            <button 
+                                onClick={() => window.open(activeDevUrl, '_blank')}
+                                className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 px-2 py-1 rounded-full border border-emerald-400/20 transition-colors mr-1 cursor-pointer"
+                                title="Click to view live development server"
+                            >
+                                <Radio className="w-3.5 h-3.5 animate-pulse" />
+                                Live
+                            </button>
+                        )}
+                        
+                        <div className="relative flex items-center">
+                            <button 
+                                className={`flex items-center gap-2 transition-colors px-2 py-1.5 rounded-l-md border border-transparent ${devServerStatus === 'starting' ? 'text-blue-400' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
+                                onClick={openPreviewWithDisclaimer}
+                                disabled={devServerStatus === 'starting'}
+                            >
+                                {devServerStatus === 'starting' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                                {devServerStatus === 'online' ? 'Redeploy Development' : 'Deploy Development'}
+                            </button>
+                            
+                            {devServerStatus === 'online' && (
+                                <>
+                                    <button 
+                                        className={`flex items-center justify-center px-1 py-1.5 rounded-r-md transition-colors border-l border-slate-700 h-full ${showDeployMenu ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
+                                        onClick={() => setShowDeployMenu(!showDeployMenu)}
+                                    >
+                                        <ChevronDown className="w-4 h-4" />
+                                    </button>
+                                    
+                                    {showDeployMenu && (
+                                        <div className="absolute top-full right-0 mt-1 w-48 bg-slate-800 border border-slate-700 rounded-md shadow-xl overflow-hidden z-50">
+                                            <button 
+                                                className="w-full text-left px-4 py-2 bg-slate-800 hover:bg-red-900/30 text-red-400 hover:text-red-300 transition-colors text-sm font-medium"
+                                                onClick={() => {
+                                                    stopDevServer();
+                                                    setShowDeployMenu(false);
+                                                }}
+                                            >
+                                                Stop Development
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+
                         <button 
-                            className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors px-2"
-                            onClick={openPreviewWithDisclaimer}
-                        >
-                            <Play className="w-4 h-4" /> Preview
-                        </button>
-                        <button 
-                            className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-md font-medium transition-colors border border-slate-600 shadow-sm"
+                            className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-md font-medium transition-colors border border-slate-600 shadow-sm ml-2"
                             onClick={() => handleSave(false)}
                         >
                             Save

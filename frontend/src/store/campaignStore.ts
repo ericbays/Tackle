@@ -21,6 +21,7 @@ export interface Infrastructure {
     region: string;
     instanceSize: string;
     domain: string;
+    smtpProfileId: string;
 }
 
 export interface Schedule {
@@ -76,7 +77,8 @@ const emptyInitialData: CampaignDraft = {
         provider: '',
         region: '',
         instanceSize: '',
-        domain: ''
+        domain: '',
+        smtpProfileId: ''
     },
     schedule: {
         startDate: '',
@@ -163,6 +165,21 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
                     }
                 }
             }
+
+            // 4. Assign SMTP Profile
+            if (draft.infrastructure.smtpProfileId) {
+                try {
+                    await api.post(`/campaigns/${campaignId}/smtp-profiles`, {
+                        smtp_profile_id: draft.infrastructure.smtpProfileId,
+                        priority: 1,
+                        weight: 100
+                    });
+                } catch (e: any) {
+                     if (e.response?.status !== 409) {
+                         console.error('Failed to assign SMTP profile', e);
+                     }
+                }
+            }
             
             toast.success('Campaign configurations saved automatically.');
         } catch (err) {
@@ -199,7 +216,8 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
                         provider: data.cloud_provider || '',
                         region: data.region || '',
                         instanceSize: data.instance_type || '',
-                        domain: data.endpoint_domain_id || ''
+                        domain: data.endpoint_domain_id || '',
+                        smtpProfileId: '' // We fetch this below
                     },
                     canaryTargets: data.configuration?.canary_targets || emptyInitialData.canaryTargets,
                     schedule: {
@@ -215,6 +233,24 @@ export const useCampaignStore = create<CampaignStore>((set, get) => ({
                     })) : emptyInitialData.emailVariants
                 }
             }));
+
+            // Fetch SMTP Profile assigned
+            try {
+                const smtpRes = await api.get(`/campaigns/${campaignId}/smtp-profiles`);
+                if (smtpRes.data?.data?.length > 0) {
+                    set((state) => ({
+                        draft: {
+                            ...state.draft,
+                            infrastructure: {
+                                ...state.draft.infrastructure,
+                                smtpProfileId: smtpRes.data.data[0].smtp_profile_id
+                            }
+                        }
+                    }));
+                }
+            } catch (err) {
+                console.error('Failed to fetch campaign SMTP profiles:', err);
+            }
         } catch (err) {
             console.error('Failed to fetch campaign:', err);
         } finally {

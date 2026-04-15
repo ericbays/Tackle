@@ -1041,6 +1041,13 @@ func buildRouter(cfg *config.Config, db *sql.DB, masterKey []byte, logger *slog.
 			r.With(writeRL, bodySizeMW(bodySizeStandard), requirePerm("campaigns:update")).Put("/campaign-templates/{id}", campaignDeps.UpdateConfigTemplate)
 			r.With(writeRL, requirePerm("campaigns:delete")).Delete("/campaign-templates/{id}", campaignDeps.DeleteConfigTemplate)
 			r.With(writeRL, bodySizeMW(bodySizeStandard), requirePerm("campaigns:create")).Post("/campaign-templates/{id}/apply", campaignDeps.ApplyConfigTemplate)
+			// Development Deployment Manager endpoints (Phase 2).
+			r.Get("/landing-pages/{id}/dev-server/status", lpDeps.GetDevServerStatus)
+			r.Post("/landing-pages/{id}/dev-server/start", lpDeps.StartDevServer)
+			r.Post("/landing-pages/{id}/dev-server/stop", lpDeps.StopDevServer)
+			r.Post("/landing-pages/{id}/dev-server/push-ast", lpDeps.HandleASTPush)
+			r.Post("/landing-pages/{id}/dev-server/sync", lpDeps.SyncDevServer)
+			r.Get("/landing-pages/{id}/dev-server/hmr", lpDeps.HMRProvider)
 
 			// Endpoint management endpoints (Phase 3 - Campaign Engine).
 			r.With(readRL, requirePerm("infrastructure:read")).Get("/campaigns/{id}/endpoint", endpointDeps.GetCampaignEndpoint)
@@ -1132,13 +1139,23 @@ func buildRouter(cfg *config.Config, db *sql.DB, masterKey []byte, logger *slog.
 
 		// Internal API — build token auth, localhost only (generated app -> framework).
 		r.Route("/internal", func(r chi.Router) {
-			r.Use(middleware.RequireBuildToken(lpRepo))
-			r.Use(middleware.OptionalEndpointAuth(endpointTokenCache))
-			r.Post("/captures", internalDeps.HandleCapture)
-			r.Post("/tracking", internalDeps.HandleTracking)
-			r.Post("/telemetry", internalDeps.HandleTelemetry)
-			r.Post("/delivery-result", internalDeps.HandleDeliveryResult)
-			r.Post("/session-captures", internalDeps.HandleSessionCapture)
+			// Dev Server Hooks (dev mode does not require build token, strictly local loop)
+			r.Route("/dev-server", func(r chi.Router) {
+				r.Post("/register", lpDeps.HandleRegisterDevServer)
+				r.Post("/heartbeat", lpDeps.HandleHeartbeatDevServer)
+				r.Post("/deregister", lpDeps.HandleDeregisterDevServer)
+			})
+
+			// Production Hook Receivers
+			r.Group(func(r chi.Router) {
+				r.Use(middleware.RequireBuildToken(lpRepo))
+				r.Use(middleware.OptionalEndpointAuth(endpointTokenCache))
+				r.Post("/captures", internalDeps.HandleCapture)
+				r.Post("/tracking", internalDeps.HandleTracking)
+				r.Post("/telemetry", internalDeps.HandleTelemetry)
+				r.Post("/delivery-result", internalDeps.HandleDeliveryResult)
+				r.Post("/session-captures", internalDeps.HandleSessionCapture)
+			})
 		})
 
 		// Endpoint data channel — authenticated via X-Build-Token or Bearer token.

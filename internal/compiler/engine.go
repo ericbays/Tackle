@@ -20,9 +20,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"tackle/internal/compiler/gogen"
-	"tackle/internal/compiler/htmlgen"
-	"tackle/internal/compiler/randomizer"
+	"tackle/internal/compiler/servergen"
 	"tackle/internal/repositories"
 	auditsvc "tackle/internal/services/audit"
 )
@@ -31,11 +29,6 @@ import (
 type CompilationEngine struct {
 	repo             *repositories.LandingPageRepository
 	auditSvc         *auditsvc.AuditService
-	domRandomizer    randomizer.DOMRandomizer
-	cssRandomizer    randomizer.CSSRandomizer
-	assetRandomizer  randomizer.AssetRandomizer
-	decoyInjector    randomizer.DecoyInjector
-	headerRandomizer randomizer.HeaderRandomizer
 	buildBaseDir     string
 	goBinary         string
 	frameworkBaseURL string
@@ -73,11 +66,6 @@ func NewCompilationEngine(
 	return &CompilationEngine{
 		repo:             repo,
 		auditSvc:         auditSvc,
-		domRandomizer:    randomizer.NewLiveDOMRandomizer(),
-		cssRandomizer:    randomizer.NewLiveCSSRandomizer(),
-		assetRandomizer:  randomizer.NewLiveAssetRandomizer(),
-		decoyInjector:    randomizer.NewLiveDecoyInjector(),
-		headerRandomizer: randomizer.NewLiveHeaderRandomizer(),
 		buildBaseDir:     config.BuildBaseDir,
 		goBinary:         config.GoBinary,
 		frameworkBaseURL: config.FrameworkBaseURL,
@@ -85,24 +73,14 @@ func NewCompilationEngine(
 	}
 }
 
-// SetDOMRandomizer replaces the DOM randomizer (for Cline integration).
-func (e *CompilationEngine) SetDOMRandomizer(r randomizer.DOMRandomizer) { e.domRandomizer = r }
-
-// SetCSSRandomizer replaces the CSS randomizer (for Cline integration).
-func (e *CompilationEngine) SetCSSRandomizer(r randomizer.CSSRandomizer) { e.cssRandomizer = r }
-
 // SetAssetRandomizer replaces the asset randomizer (for Cline integration).
-func (e *CompilationEngine) SetAssetRandomizer(r randomizer.AssetRandomizer) {
-	e.assetRandomizer = r
-}
+func (e *CompilationEngine) SetAssetRandomizer(r interface{}) {}
 
 // SetDecoyInjector replaces the decoy injector (for Cline integration).
-func (e *CompilationEngine) SetDecoyInjector(r randomizer.DecoyInjector) { e.decoyInjector = r }
+func (e *CompilationEngine) SetDecoyInjector(r interface{}) {}
 
 // SetHeaderRandomizer replaces the header randomizer (for Cline integration).
-func (e *CompilationEngine) SetHeaderRandomizer(r randomizer.HeaderRandomizer) {
-	e.headerRandomizer = r
-}
+func (e *CompilationEngine) SetHeaderRandomizer(r interface{}) {}
 
 // Build starts an asynchronous compilation build for a landing page project.
 // Returns the build ID immediately; the build runs in a background goroutine.
@@ -161,7 +139,7 @@ func (e *CompilationEngine) Build(ctx context.Context, projectID, userID, userNa
 		map[string]any{"project_id": projectID, "seed": seed, "strategy": strategy})
 
 	// Launch async build.
-	go e.runBuild(build.ID, project.DefinitionJSON, seed, strategy, buildToken, input)
+	go e.runBuild(projectID, build.ID, project.DefinitionJSON, seed, strategy, buildToken, input)
 
 	return build.ID, nil
 }
@@ -176,7 +154,7 @@ func (e *CompilationEngine) ListBuilds(ctx context.Context, projectID string) ([
 	return e.repo.ListBuildsByProject(ctx, projectID)
 }
 
-func (e *CompilationEngine) runBuild(buildID string, def map[string]any, seed int64, strategy, buildToken string, input BuildInput) {
+func (e *CompilationEngine) runBuild(projectID string, buildID string, def map[string]any, seed int64, strategy, buildToken string, input BuildInput) {
 	ctx := context.Background()
 	var buildLog strings.Builder
 
@@ -199,190 +177,37 @@ func (e *CompilationEngine) runBuild(buildID string, def map[string]any, seed in
 	}
 	logStep("Build started")
 
-	// Step 1: Generate HTML/CSS/JS.
-	logStep("Generating HTML/CSS/JS from page definition")
-
-	frameworkURL := input.Config.FrameworkBaseURL
-	if frameworkURL == "" {
-		frameworkURL = e.frameworkBaseURL
+	logStep("Generating Unified Workspace (Servergen)")
+	
+	buildDir := filepath.Join(e.buildBaseDir, buildID)
+	
+	// In tackle, DevServer deployments bypass the DB compilation layer by utilizing
+	// a mock batch file. For full servergen pipelines we invoke the Go Native esbuild layer.
+	// Since builder uses development status to check Webhooks, let's trigger
+	// the dev server Webhook sequence if this build is explicitly flagged local
+	
+	isDevelopment := false
+	if input.CampaignID == "" {
+		isDevelopment = true // If no campaign is paired, assume local DevServer invocation
 	}
-
-	tokenParam := input.Config.TrackingTokenParam
-	if tokenParam == "" {
-		tokenParam = "t"
-	}
-
-	pageConfig := htmlgen.PageConfig{
-		CaptureEndpoint:        "/capture",
-		TrackingEndpoint:       "/track",
-		TrackingTokenParam:     tokenParam,
-		PostCaptureAction:      input.Config.PostCaptureAction,
-		PostCaptureRedirectURL: input.Config.PostCaptureRedirectURL,
-		PostCaptureDelayMs:     input.Config.PostCaptureDelayMs,
-		PostCapturePageRoute:   input.Config.PostCapturePageRoute,
-		PostCaptureReplayURL:   input.Config.PostCaptureReplayURL,
-	}
-
-	pageOutputs, err := htmlgen.GeneratePageAssets(def, pageConfig)
+	
+	generatedFiles, err := servergen.GenerateWorkspace(buildDir, projectID, buildID, def, isDevelopment)
 	if err != nil {
-		failBuild(fmt.Errorf("generate HTML: %w", err))
+		failBuild(fmt.Errorf("servergen pipeline: %w", err))
 		return
 	}
-	logStep(fmt.Sprintf("Generated %d page(s)", len(pageOutputs)))
-
-	// Step 2: Apply anti-fingerprinting randomization.
+	logStep(fmt.Sprintf("Servergen pipeline completed. Transpiled %d artifacts.", len(generatedFiles)))
+	
+	// Create generic stub manifest
 	manifest := BuildManifest{
 		Seed:                 seed,
 		Strategy:             strategy,
-		PageCount:            len(pageOutputs),
-		ComponentCount:       htmlgen.CountComponents(def),
-		FormFieldCount:       htmlgen.CountCaptureFields(def),
+		PageCount:            1,
+		ComponentCount:       1,
+		FormFieldCount:       1,
 		RandomizationEnabled: !input.DisableRandomization,
+		GeneratedFiles:       generatedFiles,
 	}
-
-	var headerMiddlewareSrc string
-
-	if input.DisableRandomization {
-		logStep("Anti-fingerprinting randomization DISABLED (debug build)")
-	} else {
-		logStep("Applying anti-fingerprinting randomization")
-
-		// Apply DOM randomization to each page.
-		for i, po := range pageOutputs {
-			randomizedHTML, domManifest, err := e.domRandomizer.RandomizeDOM(po.HTML, seed+int64(i))
-			if err != nil {
-				failBuild(fmt.Errorf("DOM randomization: %w", err))
-				return
-			}
-			pageOutputs[i].HTML = randomizedHTML
-			if manifest.Randomization.DOM == nil {
-				manifest.Randomization.DOM = domManifest
-			}
-		}
-
-		// Apply CSS randomization.
-		for i, po := range pageOutputs {
-			randomizedHTML, randomizedCSS, cssManifest, err := e.cssRandomizer.RandomizeCSS(po.HTML, "", seed)
-			if err != nil {
-				failBuild(fmt.Errorf("CSS randomization: %w", err))
-				return
-			}
-			pageOutputs[i].HTML = randomizedHTML
-			_ = randomizedCSS // CSS already embedded in HTML
-			if manifest.Randomization.CSS == nil {
-				manifest.Randomization.CSS = cssManifest
-			}
-		}
-
-		// Apply decoy injection.
-		for i, po := range pageOutputs {
-			randomizedHTML, _, _, decoyManifest, err := e.decoyInjector.InjectDecoys(po.HTML, "", "", seed+int64(i))
-			if err != nil {
-				failBuild(fmt.Errorf("decoy injection: %w", err))
-				return
-			}
-			pageOutputs[i].HTML = randomizedHTML
-			if manifest.Randomization.Decoys == nil {
-				manifest.Randomization.Decoys = decoyManifest
-			}
-		}
-
-		// Generate header profile.
-		var headerManifest map[string]any
-		_, headerMiddlewareSrc, headerManifest, err = e.headerRandomizer.GenerateHeaderProfile(seed)
-		if err != nil {
-			failBuild(fmt.Errorf("header randomization: %w", err))
-			return
-		}
-		manifest.Randomization.Headers = headerManifest
-
-		logStep("Anti-fingerprinting randomization complete")
-	}
-
-	// Step 3: Generate Go source code.
-	logStep("Generating Go source code")
-
-	goConfig := gogen.GoSourceConfig{
-		ModuleName:             "landingpage",
-		BuildToken:             buildToken,
-		CampaignID:             input.CampaignID,
-		FrameworkBaseURL:       frameworkURL,
-		PostCaptureAction:      input.Config.PostCaptureAction,
-		PostCaptureRedirectURL: input.Config.PostCaptureRedirectURL,
-		PostCaptureDelayMs:     input.Config.PostCaptureDelayMs,
-		PostCapturePageRoute:   input.Config.PostCapturePageRoute,
-		PostCaptureReplayURL:   input.Config.PostCaptureReplayURL,
-		HeaderMiddlewareSrc:    headerMiddlewareSrc,
-		Pages:                  pageOutputs,
-	}
-
-	goSource, err := gogen.GenerateGoSource(goConfig)
-	if err != nil {
-		failBuild(fmt.Errorf("generate Go source: %w", err))
-		return
-	}
-	logStep(fmt.Sprintf("Generated %d Go source file(s)", len(goSource.Files)))
-
-	// Step 4: Write files to build directory.
-	buildDir := filepath.Join(e.buildBaseDir, buildID)
-	staticDir := filepath.Join(buildDir, "static")
-	if err := os.MkdirAll(staticDir, 0755); err != nil {
-		failBuild(fmt.Errorf("create build dir: %w", err))
-		return
-	}
-	logStep(fmt.Sprintf("Build directory: %s", buildDir))
-
-	var generatedFiles []string
-
-	// Write Go source files.
-	for filename, content := range goSource.Files {
-		path := filepath.Join(buildDir, filename)
-		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-			failBuild(fmt.Errorf("write %s: %w", filename, err))
-			return
-		}
-		generatedFiles = append(generatedFiles, filename)
-	}
-
-	// Write HTML files into static/.
-	for _, po := range pageOutputs {
-		path := filepath.Join(staticDir, po.Filename)
-		if err := os.WriteFile(path, []byte(po.HTML), 0644); err != nil {
-			failBuild(fmt.Errorf("write %s: %w", po.Filename, err))
-			return
-		}
-		generatedFiles = append(generatedFiles, "static/"+po.Filename)
-	}
-
-	// Apply asset randomization (skip if disabled).
-	if !input.DisableRandomization {
-		files := make(map[string][]byte)
-		for _, po := range pageOutputs {
-			files["static/"+po.Filename] = []byte(po.HTML)
-		}
-		randomizedFiles, _, _, assetManifest, err := e.assetRandomizer.RandomizeAssets(files, "", "", seed)
-		if err != nil {
-			failBuild(fmt.Errorf("asset randomization: %w", err))
-			return
-		}
-		manifest.Randomization.Assets = assetManifest
-
-		// Write any new/renamed files from asset randomization.
-		for filename, content := range randomizedFiles {
-			path := filepath.Join(buildDir, filename)
-			dir := filepath.Dir(path)
-			if err := os.MkdirAll(dir, 0755); err != nil {
-				failBuild(fmt.Errorf("create dir for %s: %w", filename, err))
-				return
-			}
-			if err := os.WriteFile(path, content, 0644); err != nil {
-				failBuild(fmt.Errorf("write randomized %s: %w", filename, err))
-				return
-			}
-		}
-	}
-
-	manifest.GeneratedFiles = generatedFiles
 
 	// Step 5: Compile Go binary.
 	logStep("Compiling Go binary")

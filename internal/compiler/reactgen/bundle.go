@@ -26,6 +26,7 @@ func RunEsbuild(workspaceDir string) (*BundleResult, error) {
 		MinifySyntax:      true,
 		Outdir:            workspaceDir,
 		Write:             false, // Return in memory for immediate binary embedding
+		Format:            api.FormatESModule,
 		External:          []string{"react", "react-dom", "react-dom/client"},
 		JSXFactory:        "React.createElement",
 		JSXFragment:       "React.Fragment",

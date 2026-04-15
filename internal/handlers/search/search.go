@@ -27,8 +27,9 @@ type SearchResult struct {
 type SearchResponse struct {
 	Campaigns []SearchResult `json:"campaigns"`
 	Targets   []SearchResult `json:"targets"`
-	Templates []SearchResult `json:"templates"`
-	Domains   []SearchResult `json:"domains"`
+	Templates    []SearchResult `json:"templates"`
+	Domains      []SearchResult `json:"domains"`
+	Applications []SearchResult `json:"applications"`
 }
 
 const maxPerType = 5
@@ -45,20 +46,22 @@ func (d *Deps) Search(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	if q == "" {
 		response.Success(w, SearchResponse{
-			Campaigns: []SearchResult{},
-			Targets:   []SearchResult{},
-			Templates: []SearchResult{},
-			Domains:   []SearchResult{},
+			Campaigns:    []SearchResult{},
+			Targets:      []SearchResult{},
+			Templates:    []SearchResult{},
+			Domains:      []SearchResult{},
+			Applications: []SearchResult{},
 		})
 		return
 	}
 
 	typesParam := r.URL.Query().Get("types")
 	wantTypes := map[string]bool{
-		"campaigns": true,
-		"targets":   true,
-		"templates": true,
-		"domains":   true,
+		"campaigns":    true,
+		"targets":      true,
+		"templates":    true,
+		"domains":      true,
+		"applications": true,
 	}
 	if typesParam != "" {
 		wantTypes = map[string]bool{}
@@ -69,10 +72,11 @@ func (d *Deps) Search(w http.ResponseWriter, r *http.Request) {
 
 	pattern := "%" + q + "%"
 	resp := SearchResponse{
-		Campaigns: []SearchResult{},
-		Targets:   []SearchResult{},
-		Templates: []SearchResult{},
-		Domains:   []SearchResult{},
+		Campaigns:    []SearchResult{},
+		Targets:      []SearchResult{},
+		Templates:    []SearchResult{},
+		Domains:      []SearchResult{},
+		Applications: []SearchResult{},
 	}
 
 	if wantTypes["campaigns"] {
@@ -104,7 +108,7 @@ func (d *Deps) Search(w http.ResponseWriter, r *http.Request) {
 				var sr SearchResult
 				if err := rows.Scan(&sr.ID, &sr.Name); err == nil {
 					sr.Type = "target"
-					sr.Path = "/targets/" + sr.ID
+					sr.Path = "/campaigns"
 					resp.Targets = append(resp.Targets, sr)
 				}
 			}
@@ -122,7 +126,7 @@ func (d *Deps) Search(w http.ResponseWriter, r *http.Request) {
 				var sr SearchResult
 				if err := rows.Scan(&sr.ID, &sr.Name); err == nil {
 					sr.Type = "template"
-					sr.Path = "/templates"
+					sr.Path = "/email-templates/" + sr.ID
 					resp.Templates = append(resp.Templates, sr)
 				}
 			}
@@ -140,8 +144,26 @@ func (d *Deps) Search(w http.ResponseWriter, r *http.Request) {
 				var sr SearchResult
 				if err := rows.Scan(&sr.ID, &sr.Name); err == nil {
 					sr.Type = "domain"
-					sr.Path = "/domains/" + sr.ID
+					sr.Path = "/engineering"
 					resp.Domains = append(resp.Domains, sr)
+				}
+			}
+		}
+	}
+
+	if wantTypes["applications"] {
+		rows, err := d.DB.QueryContext(r.Context(),
+			`SELECT id, name FROM landing_pages WHERE name ILIKE $1 ORDER BY updated_at DESC LIMIT $2`,
+			pattern, maxPerType,
+		)
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var sr SearchResult
+				if err := rows.Scan(&sr.ID, &sr.Name); err == nil {
+					sr.Type = "application"
+					sr.Path = "/builder/" + sr.ID
+					resp.Applications = append(resp.Applications, sr)
 				}
 			}
 		}

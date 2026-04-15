@@ -113,7 +113,7 @@ export default function LandingPageList() {
         <div>
           <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
             <FileCode2 className="w-7 h-7 text-blue-500" />
-            Landing Pages
+            Landing Applications
           </h1>
           <p className="text-sm text-slate-400 mt-2">
             Build and manage full React+Go web applications deployed on dynamic framework ports.
@@ -124,7 +124,7 @@ export default function LandingPageList() {
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md font-medium transition-colors"
         >
           <Plus className="w-5 h-5" />
-          Create Project
+          Create Application
         </button>
       </div>
 
@@ -135,7 +135,7 @@ export default function LandingPageList() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search landing pages..."
+            placeholder="Search landing applications..."
             className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 pl-10 pr-4 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
           />
         </div>
@@ -171,15 +171,15 @@ export default function LandingPageList() {
       ) : pages.length === 0 ? (
         <div className="bg-slate-800/20 border border-slate-700/50 rounded-lg p-12 text-center">
             <FileCode2 className="w-12 h-12 text-slate-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-300">No landing pages found</h3>
+            <h3 className="text-lg font-medium text-slate-300">No landing applications found</h3>
             <p className="text-sm text-slate-400 mt-2 max-w-md mx-auto">
-              You haven't built any landing pages yet, or none match your search. Create a new one to get started.
+              You haven't built any landing applications yet, or none match your search. Create a new one to get started.
             </p>
             <button 
                 onClick={handleCreateNew}
                 className="mt-6 flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-md font-medium transition-colors mx-auto"
             >
-                <Plus className="w-5 h-5" /> Create Project
+                <Plus className="w-5 h-5" /> Create Application
             </button>
         </div>
       ) : (

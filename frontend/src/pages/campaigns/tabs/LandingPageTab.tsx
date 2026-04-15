@@ -25,13 +25,13 @@ export default function LandingPageTab() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {isLoading ? (
                          <div className="col-span-2 text-slate-500 text-sm py-8 flex items-center justify-center">
-                             Loading landing pages from backend...
+                             Loading landing applications from backend...
                          </div>
                     ) : landingPages.length === 0 ? (
                         <div className="col-span-2 text-amber-500 text-sm bg-amber-950/20 border border-amber-900/50 rounded-lg p-6 flex flex-col items-center justify-center">
                              <AlertCircle className="w-8 h-8 mb-3 text-amber-500/80" />
-                             <p>No landing pages found.</p>
-                             <Link to="/builder" className="text-blue-400 hover:underline mt-2">Create your first landing page</Link>
+                             <p>No landing applications found.</p>
+                             <Link to="/builder" className="text-blue-400 hover:underline mt-2">Create your first landing application</Link>
                          </div>
                     ) : (
                         landingPages.map(page => (

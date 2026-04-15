@@ -21,7 +21,7 @@ func TestReactgenScaffoldAndBundle(t *testing.T) {
 				{
 					ID:   "heading-1",
 					Type: "heading",
-					Properties: map[string]string{
+					Properties: map[string]any{
 						"content": "Welcome to Tackle",
 						"level":   "1",
 					},
@@ -30,14 +30,14 @@ func TestReactgenScaffoldAndBundle(t *testing.T) {
 				{
 					ID:   "form-1",
 					Type: "form",
-					Properties: map[string]string{
+					Properties: map[string]any{
 						"actionRoute": "/api/v1/signin",
 					},
 					Children: []Node{
 						{
 							ID:   "input-1",
 							Type: "input",
-							Properties: map[string]string{
+							Properties: map[string]any{
 								"name":        "email",
 								"placeholder": "Enter Email",
 							},
@@ -45,7 +45,7 @@ func TestReactgenScaffoldAndBundle(t *testing.T) {
 						{
 							ID:   "button-1",
 							Type: "button",
-							Properties: map[string]string{
+							Properties: map[string]any{
 								"content": "Login",
 							},
 						},

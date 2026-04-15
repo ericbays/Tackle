@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { api } from '../services/api';
+import toast from 'react-hot-toast';
 
 export default function Login() {
   const setToken = useAuthStore((state) => state.setToken);
@@ -13,7 +14,7 @@ export default function Login() {
       const res = await api.post('/auth/login', { username: email, password });
       setToken(res.data.data.access_token);
     } catch (error) {
-      alert('Login failed. Please check your credentials and try again.');
+      toast.error('Login failed. Please check your credentials and try again.');
       console.error('Login error:', error);
     }
   };

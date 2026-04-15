@@ -65,7 +65,7 @@ export default function WorkspaceLayout() {
                             </span>
                         </div>
                         <p className="text-slate-400 mt-2 max-w-2xl">
-                            Configure phishing targets, email templates, and landing pages to test executive team resilience to credential harvesting.
+                            Configure phishing targets, email templates, and landing applications to test executive team resilience to credential harvesting.
                         </p>
                         <p className="text-xs text-slate-500 mt-3">Created {formattedCreated} by {owner}</p>
                     </div>

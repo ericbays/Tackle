@@ -1,8 +1,10 @@
-import { Cloud, Server, Globe, ShieldCheck } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { Cloud, Server, Globe, ShieldCheck, Send } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
 import { useCampaignStore } from '../../../store/campaignStore';
+import { useSMTPStore } from '../../../store/smtpStore';
 import { useCloudCredentials, useDomains } from '../../../hooks/useConfigurations';
 import PermissionGate from '../../../components/auth/PermissionGate';
+import { useEffect } from 'react';
 
 export const PROVIDER_CONFIGS: Record<string, { regions: string[]; sizes: string[] }> = {
     aws: {
@@ -22,6 +24,11 @@ export const PROVIDER_CONFIGS: Record<string, { regions: string[]; sizes: string
 export default function InfrastructureTab() {
     const { id } = useParams();
     const { draft: { infrastructure }, updateInfrastructure, isSaving, saveCampaign } = useCampaignStore();
+
+    const { profiles, fetchProfiles } = useSMTPStore();
+    useEffect(() => {
+        fetchProfiles();
+    }, [fetchProfiles]);
 
     const { data: cloudCredentials = [], isLoading: isLoadingCreds } = useCloudCredentials();
     const { data: domains = [], isLoading: isLoadingDomains } = useDomains();
@@ -88,6 +95,37 @@ export default function InfrastructureTab() {
                                 <p className="mt-2 text-xs text-slate-500">Recommended for your configured targets</p>
                             )}
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <section className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                <div className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <Send className="w-5 h-5 text-indigo-400" />
+                            <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">SMTP Relay Profile</h2>
+                        </div>
+                        <Link to="/smtp-profiles/new" className="text-xs text-blue-400 hover:text-blue-300">
+                            + Register New Profile
+                        </Link>
+                    </div>
+
+                    <div className="max-w-md">
+                        <label className="block text-sm font-medium text-slate-400 mb-2">Outgoing Mail Server</label>
+                        <select 
+                            value={infrastructure.smtpProfileId || ''}
+                            onChange={(e) => updateInfrastructure({ smtpProfileId: e.target.value })}
+                            className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                        >
+                            <option value="">Select an Operations SMTP profile...</option>
+                            {profiles.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                    {p.name} ({p.host}:{p.port})
+                                </option>
+                            ))}
+                        </select>
+                        <p className="mt-2 text-xs text-slate-500">This profile will be used to dispatch the phishing email payloads.</p>
                     </div>
                 </div>
             </section>
