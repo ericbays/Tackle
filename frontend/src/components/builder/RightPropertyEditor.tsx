@@ -2,18 +2,21 @@ import React, { useState } from 'react';
 import { useBuilderStore } from '../../store/builderStore';
 import { type ComponentNode } from '../../types/builder';
 import { ChevronDown, ChevronRight, Trash2, Info } from 'lucide-react';
+import { Input } from '../ui/Input';
+import { Select } from '../ui/Select';
+import { Button } from '../ui/Button';
 
 const Accordion = ({ title, children, defaultOpen = false }: { title: string, children: React.ReactNode, defaultOpen?: boolean }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
     return (
         <div className="border border-slate-800 rounded bg-slate-900/50 mb-3 overflow-hidden">
-            <button 
-                onClick={() => setIsOpen(!isOpen)} 
+            <Button variant="outline" 
+                onClick={ () => setIsOpen(!isOpen)} 
                 className="w-full flex items-center justify-between p-3 bg-slate-800/50 hover:bg-slate-800 transition-colors text-slate-300 text-xs font-semibold uppercase tracking-wider"
             >
                 {title}
                 {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-            </button>
+            </Button>
             {isOpen && <div className="p-3 space-y-4">{children}</div>}
         </div>
     );
@@ -56,12 +59,12 @@ export const RightPropertyEditor = () => {
                 </div>
                 <div className="border-t border-slate-800/50 pt-6 w-full flex flex-col items-center">
                     <p className="text-slate-500 text-[10px] uppercase mb-3 font-semibold tracking-wider">Page Background Settings</p>
-                    <button 
-                        onClick={() => setSelectedNodes(['root-1'])}
+                    <Button variant="outline" 
+                        onClick={ () => setSelectedNodes(['root-1'])}
                         className="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 font-medium px-4 py-2 rounded transition text-xs w-full shadow-sm"
                     >
                         Edit Root Container
-                    </button>
+                    </Button>
                     <p className="text-slate-600 text-[10px] mt-3">Use this to remove the default padding or change the page background color.</p>
                 </div>
             </div>
@@ -131,9 +134,9 @@ export const RightPropertyEditor = () => {
                         </div>
                     )}
                 </div>
-                <input 
+                <Input 
                     type={type}
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded px-2.5 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-600"
+                    
                     value={localValue}
                     onChange={e => setLocalValue(e.target.value)}
                     onBlur={handleBlur}
@@ -157,15 +160,15 @@ export const RightPropertyEditor = () => {
                     </div>
                 )}
             </div>
-            <select 
-                className="w-full bg-slate-950 border border-slate-700/80 rounded px-2.5 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-all"
+            <Select 
+                
                 value={value || ''}
                 onChange={e => onChange(e.target.value)}
             >
                 {options.map((opt: any) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
-            </select>
+            </Select>
         </div>
     );
 
@@ -176,24 +179,24 @@ export const RightPropertyEditor = () => {
         <div className="w-[340px] border-l border-slate-800 bg-slate-900 flex flex-col shrink-0 max-h-[calc(100vh-60px)] overflow-y-auto">
             {/* Tabs */}
             <div className="flex border-b border-slate-800 shrink-0 sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10">
-                <button 
+                <Button variant="ghost" size="sm" 
                     className={`flex-1 py-3.5 text-center text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors ${activeTab === 'content' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
-                    onClick={() => setActiveTab('content')}
+                    onClick={ () => setActiveTab('content')}
                 >
                     Content
-                </button>
-                <button 
+                </Button>
+                <Button variant="ghost" size="sm" 
                     className={`flex-1 py-3.5 text-center text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors ${activeTab === 'style' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
-                    onClick={() => setActiveTab('style')}
+                    onClick={ () => setActiveTab('style')}
                 >
                     Style
-                </button>
-                <button 
+                </Button>
+                <Button variant="ghost" size="sm" 
                     className={`flex-1 py-3.5 text-center text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors ${activeTab === 'advanced' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
-                    onClick={() => setActiveTab('advanced')}
+                    onClick={ () => setActiveTab('advanced')}
                 >
                     Advanced
-                </button>
+                </Button>
             </div>
 
             <div className="p-4 bg-slate-900 border-b border-slate-800 shadow-sm flex items-center justify-between">
@@ -202,13 +205,13 @@ export const RightPropertyEditor = () => {
                     <div className="text-slate-200 font-medium capitalize mt-0.5">{selectedNode.type.replace('_', ' ')}</div>
                 </div>
                 {selectedNode.component_id !== 'root-1' && (
-                    <button 
-                        onClick={() => removeNode(activePageId!, selectedNode!.component_id)}
+                    <Button variant="outline" 
+                        onClick={ () => removeNode(activePageId!, selectedNode!.component_id)}
                         className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
                         title="Delete component"
                     >
                         <Trash2 size={16} />
-                    </button>
+                    </Button>
                 )}
             </div>
 

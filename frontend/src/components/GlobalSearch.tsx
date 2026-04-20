@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Loader2, Target, Users, Mail, Globe, Command, FileCode2 } from 'lucide-react';
 import { api } from '../services/api';
+import { Input } from './ui/Input';
 
 export interface SearchResult {
 	type: string;
@@ -134,7 +135,7 @@ export function GlobalSearch() {
         <div className="relative w-96 z-50">
             <div className="relative flex items-center w-full group">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors pointer-events-none" />
-                <input
+                <Input
                     ref={inputRef}
                     type="text"
                     value={query}
@@ -147,7 +148,7 @@ export function GlobalSearch() {
                     }}
                     onKeyDown={handleInputKeyDown}
                     placeholder="Search campaigns, targets, templates..."
-                    className="w-full bg-slate-900 border border-slate-700 rounded-md py-1.5 pl-9 pr-14 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors shadow-sm"
+                    className="pl-9 pr-14 shadow-sm"
                 />
                 
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">

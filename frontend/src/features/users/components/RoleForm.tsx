@@ -4,6 +4,8 @@ import { roleApi } from '../services/roleApi';
 import { X, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Role } from '../services/userApi';
+import { Input } from '../../../components/ui/Input';
+import { Button } from '../../../components/ui/Button';
 
 interface RoleFormProps {
   isOpen: boolean;
@@ -89,19 +91,19 @@ export default function RoleForm({ isOpen, onClose, roleToEdit }: RoleFormProps)
       <div className="bg-[#12182b] border border-slate-800 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
         <div className="flex justify-between items-center p-6 border-b border-slate-800 shrink-0">
           <h2 className="text-xl font-bold text-slate-100">{roleToEdit ? 'Edit Role' : 'Create Custom Role'}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+          <Button onClick={onClose}  variant="ghost">
             <X size={20} />
-          </button>
+          </Button>
         </div>
         
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Role Name</label>
-              <input 
+              <Input 
                 type="text" 
                 required
-                className="w-full bg-[#0a0f1a] border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                
                 value={formData.name}
                 onChange={e => setFormData({...formData, name: e.target.value})}
                 disabled={roleToEdit?.is_builtin}
@@ -160,20 +162,20 @@ export default function RoleForm({ isOpen, onClose, roleToEdit }: RoleFormProps)
           </div>
 
           <div className="pt-4 mt-auto shrink-0 flex justify-end gap-3 border-t border-slate-800">
-            <button 
+            <Button 
               type="button" 
               onClick={onClose}
-              className="px-4 py-2 mt-4 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-            >
+              
+             variant="ghost">
               Cancel
-            </button>
-            <button 
+            </Button>
+            <Button 
               type="submit" 
               disabled={mutation.isPending || roleToEdit?.is_builtin}
-              className="mt-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
-            >
+              
+             variant="primary">
               {mutation.isPending ? 'Saving...' : 'Save Role'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

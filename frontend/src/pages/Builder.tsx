@@ -11,6 +11,8 @@ import { WorkflowEditor } from '../components/builder/WorkflowEditor';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { api } from '../services/api';
+import { Input } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
 
 export default function Builder() {
   const queryClient = useQueryClient();
@@ -303,13 +305,13 @@ export default function Builder() {
             {/* Top Toolbar */}
             <div className="h-14 border-b border-slate-800 bg-slate-900 flex items-center justify-between px-4 shrink-0 z-50">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => navigate('/landing-pages')} className="text-slate-400 hover:text-white transition-colors" title="Back to Dashboard">
+                    <Button variant="outline" onClick={ () => navigate('/landing-pages')} className="text-slate-400 hover:text-white transition-colors" title="Back to Dashboard">
                         <ArrowLeft className="w-5 h-5" />
-                    </button>
+                    </Button>
                     {isEditingName ? (
-                        <input 
+                        <Input 
                             autoFocus
-                            className="bg-slate-800 text-slate-200 px-2 py-1 rounded border border-blue-500 outline-none w-48 text-sm font-semibold"
+                            
                             value={editedName}
                             onChange={(e) => setEditedName(e.target.value)}
                             onBlur={() => {
@@ -345,105 +347,105 @@ export default function Builder() {
 
                 <div className="flex items-center gap-6">
                     <div className="flex items-center bg-slate-800 rounded-md p-0.5 border border-slate-700">
-                        <button 
+                        <Button variant="ghost" 
                             className={`p-1.5 rounded ${devicePreview === 'desktop' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'}`}
-                            onClick={() => setDevicePreview('desktop')}
+                            onClick={ () => setDevicePreview('desktop')}
                         >
                             <Monitor className="w-4 h-4" />
-                        </button>
-                        <button 
+                        </Button>
+                        <Button variant="ghost" 
                             className={`p-1.5 rounded ${devicePreview === 'tablet' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'}`}
-                            onClick={() => setDevicePreview('tablet')}
+                            onClick={ () => setDevicePreview('tablet')}
                         >
                             <Tablet className="w-4 h-4" />
-                        </button>
-                        <button 
+                        </Button>
+                        <Button variant="ghost" 
                             className={`p-1.5 rounded ${devicePreview === 'mobile' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'}`}
-                            onClick={() => setDevicePreview('mobile')}
+                            onClick={ () => setDevicePreview('mobile')}
                         >
                             <Smartphone className="w-4 h-4" />
-                        </button>
+                        </Button>
                     </div>
 
                     <div className="flex items-center gap-2 text-slate-400 border-x border-slate-700 px-4">
-                        <button 
+                        <Button 
                             className={`hover:text-white ${historyIndex <= 0 ? 'opacity-30 cursor-not-allowed' : ''}`} 
                             onClick={undo}
                             disabled={historyIndex <= 0}
-                        ><Undo2 className="w-4 h-4" /></button>
-                        <button 
+                         variant="outline"><Undo2 className="w-4 h-4" /></Button>
+                        <Button 
                             className={`hover:text-white ${historyIndex >= historyLength - 1 ? 'opacity-30 cursor-not-allowed' : ''}`} 
                             onClick={redo}
                             disabled={historyIndex >= historyLength - 1}
-                        ><Redo2 className="w-4 h-4" /></button>
+                        ><Redo2 className="w-4 h-4" /></Button>
                     </div>
 
                     <div className="flex items-center gap-2 text-slate-400">
-                        <button className="hover:text-white" onClick={() => setZoom(Math.max(25, zoom - 25))}><ZoomOut className="w-4 h-4" /></button>
+                        <Button variant="outline"  onClick={ () => setZoom(Math.max(25, zoom - 25))}><ZoomOut className="w-4 h-4" /></Button>
                         <span className="w-12 text-center text-xs">{zoom}%</span>
-                        <button className="hover:text-white" onClick={() => setZoom(Math.min(200, zoom + 25))}><ZoomIn className="w-4 h-4" /></button>
+                        <Button variant="outline"  onClick={ () => setZoom(Math.min(200, zoom + 25))}><ZoomIn className="w-4 h-4" /></Button>
                     </div>
 
                     <div className="flex items-center gap-3">
                         {devServerStatus === 'online' && activeDevUrl && (
-                            <button 
-                                onClick={() => window.open(activeDevUrl, '_blank')}
+                            <Button variant="outline" 
+                                onClick={ () => window.open(activeDevUrl, '_blank')}
                                 className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 px-2 py-1 rounded-full border border-emerald-400/20 transition-colors mr-1 cursor-pointer"
                                 title="Click to view live development server"
                             >
                                 <Radio className="w-3.5 h-3.5 animate-pulse" />
                                 Live
-                            </button>
+                            </Button>
                         )}
                         
                         <div className="relative flex items-center">
-                            <button 
+                            <Button 
                                 className={`flex items-center gap-2 transition-colors px-2 py-1.5 rounded-l-md border border-transparent ${devServerStatus === 'starting' ? 'text-blue-400' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
                                 onClick={openPreviewWithDisclaimer}
                                 disabled={devServerStatus === 'starting'}
-                            >
+                             variant="ghost" size="sm">
                                 {devServerStatus === 'starting' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
                                 {devServerStatus === 'online' ? 'Redeploy Development' : 'Deploy Development'}
-                            </button>
+                            </Button>
                             
                             {devServerStatus === 'online' && (
                                 <>
-                                    <button 
+                                    <Button variant="ghost" 
                                         className={`flex items-center justify-center px-1 py-1.5 rounded-r-md transition-colors border-l border-slate-700 h-full ${showDeployMenu ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
-                                        onClick={() => setShowDeployMenu(!showDeployMenu)}
+                                        onClick={ () => setShowDeployMenu(!showDeployMenu)}
                                     >
                                         <ChevronDown className="w-4 h-4" />
-                                    </button>
+                                    </Button>
                                     
                                     {showDeployMenu && (
                                         <div className="absolute top-full right-0 mt-1 w-48 bg-slate-800 border border-slate-700 rounded-md shadow-xl overflow-hidden z-50">
-                                            <button 
-                                                className="w-full text-left px-4 py-2 bg-slate-800 hover:bg-red-900/30 text-red-400 hover:text-red-300 transition-colors text-sm font-medium"
-                                                onClick={() => {
+                                            <Button variant="destructive" 
+                                                
+                                                onClick={ () => {
                                                     stopDevServer();
                                                     setShowDeployMenu(false);
                                                 }}
                                             >
                                                 Stop Development
-                                            </button>
+                                            </Button>
                                         </div>
                                     )}
                                 </>
                             )}
                         </div>
 
-                        <button 
-                            className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-md font-medium transition-colors border border-slate-600 shadow-sm ml-2"
-                            onClick={() => handleSave(false)}
+                        <Button variant="outline" 
+                            
+                            onClick={ () => handleSave(false)}
                         >
                             Save
-                        </button>
-                        <button 
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md font-medium transition-colors shadow-sm"
-                            onClick={() => handleSave(true)}
+                        </Button>
+                        <Button variant="primary" 
+                            
+                            onClick={ () => handleSave(true)}
                         >
                             <Save className="w-4 h-4" /> Save & Close
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -453,34 +455,34 @@ export default function Builder() {
                 
                 {/* Left Icon Toolbar (48px) */}
                 <div className="w-12 border-r border-slate-800 bg-slate-900 flex flex-col items-center py-4 shrink-0 z-40 gap-2">
-                    <button 
-                        onClick={() => setLeftPanel('components')}
+                    <Button variant="outline" 
+                        onClick={ () => setLeftPanel('components')}
                         className={`w-10 h-10 flex items-center justify-center rounded-md cursor-pointer transition-all ${leftPanel === 'components' ? 'bg-slate-800 text-accent-primary' : 'hover:bg-slate-800 text-slate-400 hover:text-white'}`}
                         title="Components"
                     >
                         <Blocks className="w-5 h-5" />
-                    </button>
-                    <button 
-                        onClick={() => setLeftPanel('layers')}
+                    </Button>
+                    <Button variant="outline" 
+                        onClick={ () => setLeftPanel('layers')}
                         className={`w-10 h-10 flex items-center justify-center rounded-md cursor-pointer transition-all ${leftPanel === 'layers' ? 'bg-slate-800 text-accent-primary' : 'hover:bg-slate-800 text-slate-400 hover:text-white'}`}
                         title="DOM Tree (Layers)"
                     >
                         <Network className="w-5 h-5" />
-                    </button>
-                    <button 
-                        onClick={() => setLeftPanel('pages')}
+                    </Button>
+                    <Button variant="outline" 
+                        onClick={ () => setLeftPanel('pages')}
                         className={`w-10 h-10 flex items-center justify-center rounded-md cursor-pointer transition-all ${leftPanel === 'pages' ? 'bg-slate-800 text-blue-400' : 'hover:bg-slate-800 text-slate-400 hover:text-white'}`}
                         title="Pages & Routing"
                     >
                         <Layers className="w-5 h-5" />
-                    </button>
-                    <button 
-                        onClick={() => setLeftPanel('workflows')}
+                    </Button>
+                    <Button variant="outline" 
+                        onClick={ () => setLeftPanel('workflows')}
                         className={`w-10 h-10 flex items-center justify-center rounded-md cursor-pointer transition-all mt-4 border-t border-slate-800 pt-2 ${leftPanel === 'workflows' ? 'bg-slate-800 text-blue-400' : 'hover:bg-slate-800 text-slate-400 hover:text-white'}`}
                         title="Global Event Workflows"
                     >
                         <Network className="w-5 h-5" />
-                    </button>
+                    </Button>
                 </div>
 
                 {/* Left Flyout */}
@@ -514,21 +516,21 @@ export default function Builder() {
                             We must commit your local changes to securely generate the preview payload.
                         </p>
                         <div className="flex justify-end gap-3">
-                            <button 
-                                className="px-4 py-2 rounded text-slate-400 hover:text-slate-200 transition-colors"
-                                onClick={() => setShowPreviewModal(false)}
+                            <Button variant="ghost" 
+                                
+                                onClick={ () => setShowPreviewModal(false)}
                             >
                                 Cancel
-                            </button>
-                            <button 
-                                className="flex flex-row items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded font-medium transition-colors border-none"
-                                onClick={() => {
+                            </Button>
+                            <Button variant="primary" 
+                                
+                                onClick={ () => {
                                     setShowPreviewModal(false);
                                     handlePreviewCompile();
                                 }}
                             >
                                 <Save className="w-4 h-4" /> Save & Preview
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>

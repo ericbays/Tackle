@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Users, ShieldAlert } from 'lucide-react';
 import TargetList from './components/TargetList';
 import BlocklistManager from './components/BlocklistManager';
+import { Button } from '../../components/ui/Button';
 
 export default function TargetManagementPage() {
     const [activeTab, setActiveTab] = useState<'targets' | 'blocklist'>('targets');
@@ -19,8 +20,8 @@ export default function TargetManagementPage() {
             </div>
 
             <div className="flex space-x-1 border-b border-slate-700/50">
-                <button
-                    onClick={() => setActiveTab('targets')}
+                <Button variant="outline"
+                    onClick={ () => setActiveTab('targets')}
                     className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors
                         ${activeTab === 'targets' 
                             ? 'border-blue-500 text-blue-400' 
@@ -29,9 +30,9 @@ export default function TargetManagementPage() {
                 >
                     <Users className="w-4 h-4" />
                     Global Targets
-                </button>
-                <button
-                    onClick={() => setActiveTab('blocklist')}
+                </Button>
+                <Button variant="outline"
+                    onClick={ () => setActiveTab('blocklist')}
                     className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors
                         ${activeTab === 'blocklist' 
                             ? 'border-red-500 text-red-400' 
@@ -40,7 +41,7 @@ export default function TargetManagementPage() {
                 >
                     <ShieldAlert className="w-4 h-4" />
                     Blocklist Rules
-                </button>
+                </Button>
             </div>
 
             <div className="mt-6">

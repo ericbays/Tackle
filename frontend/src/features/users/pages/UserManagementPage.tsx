@@ -3,6 +3,7 @@ import { Users, Shield, UserPlus, Activity } from 'lucide-react';
 import UserTable from '../components/UserTable';
 import RoleTable from '../components/RoleTable';
 import AuditLogTable from '../components/AuditLogTable';
+import { Button } from '../../../components/ui/Button';
 
 export default function UserManagementPage() {
   const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'audit'>('users');
@@ -17,8 +18,8 @@ export default function UserManagementPage() {
 
       {/* Tabs Layout */}
       <div className="flex border-b border-slate-800">
-        <button
-          onClick={() => setActiveTab('users')}
+        <Button variant="outline"
+          onClick={ () => setActiveTab('users')}
           className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 ${
             activeTab === 'users'
               ? 'border-blue-500 text-blue-400'
@@ -27,9 +28,9 @@ export default function UserManagementPage() {
         >
           <Users size={18} />
           Users
-        </button>
-        <button
-          onClick={() => setActiveTab('roles')}
+        </Button>
+        <Button variant="outline"
+          onClick={ () => setActiveTab('roles')}
           className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 ${
             activeTab === 'roles'
               ? 'border-blue-500 text-blue-400'
@@ -38,9 +39,9 @@ export default function UserManagementPage() {
         >
           <Shield size={18} />
           Roles & Permissions
-        </button>
-        <button
-          onClick={() => setActiveTab('audit')}
+        </Button>
+        <Button variant="outline"
+          onClick={ () => setActiveTab('audit')}
           className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 ${
             activeTab === 'audit'
               ? 'border-blue-500 text-blue-400'
@@ -49,7 +50,7 @@ export default function UserManagementPage() {
         >
           <Activity size={18} />
           Audit Logs
-        </button>
+        </Button>
       </div>
 
       {/* Tab Panels */}

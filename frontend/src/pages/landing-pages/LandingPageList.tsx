@@ -5,6 +5,8 @@ import { Plus, Search, FileCode2, Clock, FileEdit, Trash2, ChevronLeft, ChevronR
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button';
 
 interface LandingPage {
   id: string;
@@ -119,19 +121,19 @@ export default function LandingPageList() {
             Build and manage full React+Go web applications deployed on dynamic framework ports.
           </p>
         </div>
-        <button 
+        <Button 
           onClick={handleCreateNew}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md font-medium transition-colors"
-        >
+          
+         variant="primary">
           <Plus className="w-5 h-5" />
           Create Application
-        </button>
+        </Button>
       </div>
 
       <div className="flex justify-between items-center bg-slate-800/50 p-4 rounded-lg border border-slate-700/50 mb-6">
         <div className="relative w-96">
           <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
+          <Input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -145,20 +147,20 @@ export default function LandingPageList() {
             <div className="flex items-center gap-4 text-sm text-slate-300">
                 <span>Page {meta.page} of {meta.total_pages}</span>
                 <div className="flex items-center gap-1">
-                    <button 
+                    <Button variant="outline" 
                         disabled={meta.page <= 1}
-                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        onClick={ () => setPage(p => Math.max(1, p - 1))}
                         className="p-1 px-2 rounded bg-slate-700 hover:bg-slate-600 disabled:opacity-30 disabled:hover:bg-slate-700 transition"
                     >
                         <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <button 
+                    </Button>
+                    <Button variant="outline"
                         disabled={meta.page >= meta.total_pages}
                         onClick={() => setPage(p => Math.min(meta.total_pages, p + 1))}
                         className="p-1 px-2 rounded bg-slate-700 hover:bg-slate-600 disabled:opacity-30 disabled:hover:bg-slate-700 transition"
                     >
                         <ChevronRight className="w-4 h-4" />
-                    </button>
+                    </Button>
                 </div>
             </div>
         )}
@@ -175,12 +177,12 @@ export default function LandingPageList() {
             <p className="text-sm text-slate-400 mt-2 max-w-md mx-auto">
               You haven't built any landing applications yet, or none match your search. Create a new one to get started.
             </p>
-            <button 
+            <Button 
                 onClick={handleCreateNew}
-                className="mt-6 flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-md font-medium transition-colors mx-auto"
-            >
+                
+             variant="outline">
                 <Plus className="w-5 h-5" /> Create Application
-            </button>
+            </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -204,25 +206,25 @@ export default function LandingPageList() {
                 {deletingId === page.id ? (
                   <div className="flex items-center gap-2 mr-auto bg-red-950/30 px-2 rounded border border-red-900/50">
                     <span className="text-xs text-red-400">Confirm delete?</span>
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(page.id); }} className="text-xs text-white bg-red-600 hover:bg-red-500 px-2 py-1 rounded">Yes</button>
-                    <button onClick={(e) => { e.stopPropagation(); setDeletingId(null); }} className="text-xs text-slate-300 hover:bg-slate-700 px-2 py-1 rounded">No</button>
+                    <Button variant="outline" onClick={ (e) => { e.stopPropagation(); handleDelete(page.id); }} className="text-xs text-white bg-red-600 hover:bg-red-500 px-2 py-1 rounded">Yes</Button>
+                    <Button variant="outline" onClick={ (e) => { e.stopPropagation(); setDeletingId(null); }} className="text-xs text-slate-300 hover:bg-slate-700 px-2 py-1 rounded">No</Button>
                   </div>
                 ) : (
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); setDeletingId(page.id); }}
+                  <Button variant="outline" 
+                    onClick={ (e) => { e.stopPropagation(); setDeletingId(page.id); }}
                     className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-md transition-colors"
                     title="Delete"
                   >
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </Button>
                 )}
-                <button 
-                  onClick={() => navigate(`/builder/${page.id}`)}
+                <Button variant="outline" 
+                  onClick={ () => navigate(`/builder/${page.id}`)}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 text-sm font-medium rounded transition-colors"
                 >
                   <FileEdit className="w-4 h-4" />
                   Builder Editor
-                </button>
+                </Button>
               </div>
             </div>
           ))}

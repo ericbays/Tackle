@@ -1,6 +1,7 @@
 
 import { type LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Card, CardContent } from '../ui/Card';
 
 interface StatCardProps {
   title: string;
@@ -15,8 +16,10 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp }: StatCardP
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-panel p-6 rounded-xl flex items-center gap-4 hover:border-slate-600/50 transition-colors cursor-pointer group"
+      className="group"
     >
+      <Card className="hover:border-slate-600/50 transition-colors cursor-pointer h-full">
+        <CardContent className="p-6 flex items-center gap-4">
       <div className="p-3 bg-slate-800/50 rounded-lg group-hover:bg-blue-500/10 transition-colors">
         <Icon className="w-6 h-6 text-blue-400" />
       </div>
@@ -31,6 +34,8 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp }: StatCardP
           )}
         </div>
       </div>
+        </CardContent>
+      </Card>
     </motion.div>
   );
 }

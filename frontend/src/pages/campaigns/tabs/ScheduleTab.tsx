@@ -2,6 +2,9 @@ import { Clock, CalendarDays, Timer, PlaneTakeoff } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useCampaignStore } from '../../../store/campaignStore';
 import PermissionGate from '../../../components/auth/PermissionGate';
+import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
+import { Button } from '../../../components/ui/Button';
 
 export default function ScheduleTab() {
     const { id } = useParams();
@@ -20,7 +23,7 @@ export default function ScheduleTab() {
                         <label className="block text-sm font-medium text-slate-400">Launch Date</label>
                         <div className="relative">
                             <CalendarDays className="absolute left-3 top-2.5 w-5 h-5 text-slate-500" />
-                            <input 
+                            <Input 
                                 type="date" 
                                 value={schedule.startDate}
                                 onChange={(e) => updateSchedule({ startDate: e.target.value })}
@@ -32,7 +35,7 @@ export default function ScheduleTab() {
                         <label className="block text-sm font-medium text-slate-400">Launch Time (UTC)</label>
                         <div className="relative">
                             <Clock className="absolute left-3 top-2.5 w-5 h-5 text-slate-500" />
-                            <input 
+                            <Input 
                                 type="time" 
                                 value={schedule.startTime}
                                 onChange={(e) => updateSchedule({ startTime: e.target.value })}
@@ -56,20 +59,20 @@ export default function ScheduleTab() {
 
                     <div>
                         <label className="block text-sm font-medium text-slate-400 mb-2">Pacing Mode</label>
-                        <select 
+                        <Select 
                             value={schedule.pacingMode}
                             onChange={(e) => updateSchedule({ pacingMode: e.target.value })}
                             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
                         >
                             <option>Staggered (Recommended)</option>
                             <option>Immediate Spurt</option>
-                        </select>
+                        </Select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 pt-2">
                         <div>
                             <label className="block text-xs font-medium text-slate-500 mb-2">Max batches per hour</label>
-                            <input 
+                            <Input 
                                 type="number" 
                                 value={schedule.maxBatchesPerHour} 
                                 onChange={(e) => updateSchedule({ maxBatchesPerHour: parseInt(e.target.value) || 0 })}
@@ -78,7 +81,7 @@ export default function ScheduleTab() {
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-slate-500 mb-2">Max emails per batch</label>
-                            <input 
+                            <Input 
                                 type="number" 
                                 value={schedule.maxEmailsPerBatch} 
                                 onChange={(e) => updateSchedule({ maxEmailsPerBatch: parseInt(e.target.value) || 0 })}
@@ -95,13 +98,13 @@ export default function ScheduleTab() {
 
             <div className="flex justify-end pt-4">
                 <PermissionGate permission="campaigns:write">
-                    <button 
-                        onClick={() => saveCampaign(id)}
+                    <Button variant="outline" 
+                        onClick={ () => saveCampaign(id)}
                         disabled={isSaving}
                         className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-md font-medium transition-colors"
                     >
                         {isSaving ? 'Saving...' : 'Save Schedule'}
-                    </button>
+                    </Button>
                 </PermissionGate>
             </div>
         </div>

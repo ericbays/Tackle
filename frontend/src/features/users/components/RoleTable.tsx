@@ -2,6 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { roleApi } from '../services/roleApi';
 import { Shield, MoreHorizontal, Settings, Users } from 'lucide-react';
 import { useState } from 'react';
+import { Button } from '../../../components/ui/Button';
+import { Badge } from '../../../components/ui/Badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/Card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../../components/ui/Table';
 import RoleForm from '../components/RoleForm';
 import PermissionGate from '../../../components/auth/PermissionGate';
 
@@ -32,95 +36,88 @@ export default function RoleTable() {
     <div className="space-y-6">
       <div className="flex justify-end">
         <PermissionGate permission="roles:create">
-          <button 
-            onClick={() => setIsFormOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2"
-          >
+          <Button onClick={() => setIsFormOpen(true)} variant="primary" className="flex items-center gap-2">
             <Shield size={16} /> Create Custom Role
-          </button>
+          </Button>
         </PermissionGate>
       </div>
 
       <RoleForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
 
-      <div className="bg-[#12182b] border border-slate-800 rounded-lg overflow-hidden">
-        <div className="p-4 border-b border-slate-800 bg-[#1a2235]">
-          <h2 className="text-lg font-medium text-slate-200">Built-in Roles</h2>
-          <p className="text-sm text-slate-400">Standard system roles. These cannot be deleted or modified.</p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-[#0f141f] text-slate-400 font-medium">
-              <tr>
-                <th className="px-6 py-3 w-1/4">Role Name</th>
-                <th className="px-6 py-3">Description</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/50">
-              {builtinRoles.length === 0 ? (
-                <tr><td colSpan={2} className="px-6 py-8 text-center text-slate-500">No built-in roles found.</td></tr>
-              ) : (
-                builtinRoles.map(role => (
-                  <tr key={role.id} className="hover:bg-slate-800/30">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded bg-slate-800/50 flex items-center justify-center text-indigo-400">
-                          <Settings size={16} />
-                        </div>
-                        <span className="font-semibold text-slate-200">{role.name}</span>
-                        <span className="bg-indigo-500/10 text-indigo-400 text-xs px-2 py-0.5 rounded border border-indigo-500/20">System</span>
+      <Card>
+        <CardHeader className="bg-[#1a2235] border-b border-slate-800 rounded-t-xl">
+          <CardTitle>Built-in Roles</CardTitle>
+          <CardDescription>Standard system roles. These cannot be deleted or modified.</CardDescription>
+        </CardHeader>
+        <Table className="border-0 shadow-none rounded-t-none">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-1/4 bg-[#0f141f]">Role Name</TableHead>
+              <TableHead className="bg-[#0f141f]">Description</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {builtinRoles.length === 0 ? (
+              <TableRow><TableCell colSpan={2} className="py-8 text-center text-slate-500">No built-in roles found.</TableCell></TableRow>
+            ) : (
+              builtinRoles.map(role => (
+                <TableRow key={role.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded bg-slate-800/50 flex items-center justify-center text-indigo-400">
+                        <Settings size={16} />
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-slate-400">{role.description}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                      <span className="font-semibold text-slate-200">{role.name}</span>
+                      <Badge variant="outline" className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20">System</Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-slate-400">{role.description}</TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Card>
 
-      <div className="bg-[#12182b] border border-slate-800 rounded-lg overflow-hidden mt-6">
-        <div className="p-4 border-b border-slate-800 bg-[#1a2235]">
-          <h2 className="text-lg font-medium text-slate-200">Custom Roles</h2>
-          <p className="text-sm text-slate-400">Organization-specific roles with tailored permission sets.</p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-[#0f141f] text-slate-400 font-medium">
-              <tr>
-                <th className="px-6 py-3 w-1/4">Role Name</th>
-                <th className="px-6 py-3">Description</th>
-                <th className="px-6 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/50">
-              {customRoles.length === 0 ? (
-                <tr><td colSpan={3} className="px-6 py-12 text-center text-slate-500">No custom roles created yes.</td></tr>
-              ) : (
-                customRoles.map(role => (
-                  <tr key={role.id} className="hover:bg-slate-800/30">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded bg-slate-800/50 flex items-center justify-center text-emerald-400">
-                          <Users size={16} />
-                        </div>
-                        <span className="font-semibold text-slate-200">{role.name}</span>
+      <Card className="mt-6">
+        <CardHeader className="bg-[#1a2235] border-b border-slate-800 rounded-t-xl">
+          <CardTitle>Custom Roles</CardTitle>
+          <CardDescription>Organization-specific roles with tailored permission sets.</CardDescription>
+        </CardHeader>
+        <Table className="border-0 shadow-none rounded-t-none">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-1/4 bg-[#0f141f]">Role Name</TableHead>
+              <TableHead className="bg-[#0f141f]">Description</TableHead>
+              <TableHead className="bg-[#0f141f] text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {customRoles.length === 0 ? (
+              <TableRow><TableCell colSpan={3} className="py-12 text-center text-slate-500">No custom roles created yet.</TableCell></TableRow>
+            ) : (
+              customRoles.map(role => (
+                <TableRow key={role.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded bg-slate-800/50 flex items-center justify-center text-emerald-400">
+                        <Users size={16} />
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-slate-400">{role.description}</td>
-                    <td className="px-6 py-4 text-right">
-                      <button className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-700 transition-colors">
-                        <MoreHorizontal size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                      <span className="font-semibold text-slate-200">{role.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-slate-400">{role.description}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontal size={18} />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Card>
 
     </div>
   );

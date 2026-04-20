@@ -3,6 +3,9 @@ import { X, Plus, Trash2, Globe, AlertTriangle, Pencil, Check } from 'lucide-rea
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { engineeringApi } from '../services/engineeringApi';
 import toast from 'react-hot-toast';
+import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
+import { Button } from '../../../components/ui/Button';
 
 interface ManageDnsModalProps {
   onClose: () => void;
@@ -88,9 +91,9 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
             </h2>
             <p className="text-slate-400 text-sm mt-1">Editing zone file for <span className="text-slate-200 font-medium">{domainName}</span></p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 p-1 rounded-md transition-colors hover:bg-slate-800">
+          <Button onClick={onClose}  variant="ghost">
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
@@ -110,7 +113,7 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
                 {/* New Record Row */}
                 <tr className="bg-slate-800/30">
                   <td className="px-4 py-3">
-                    <select 
+                    <Select 
                       value={newType} 
                       onChange={(e) => setNewType(e.target.value)}
                       className="w-full bg-[#12182b] border border-slate-700 rounded px-2 py-1.5 text-slate-200 outline-none focus:border-blue-500 text-sm font-mono"
@@ -121,10 +124,10 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
                       <option value="TXT">TXT</option>
                       <option value="MX">MX</option>
                       <option value="NS">NS</option>
-                    </select>
+                    </Select>
                   </td>
                   <td className="px-4 py-3">
-                    <input 
+                    <Input 
                       type="text" 
                       value={newName} 
                       onChange={(e) => setNewName(e.target.value)}
@@ -133,7 +136,7 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
                     />
                   </td>
                   <td className="px-4 py-3">
-                    <input 
+                    <Input 
                       type="text" 
                       value={newValue} 
                       onChange={(e) => setNewValue(e.target.value)}
@@ -142,7 +145,7 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
                     />
                   </td>
                   <td className="px-4 py-3">
-                    <input 
+                    <Input 
                       type="text" 
                       value={newTtl} 
                       onChange={(e) => setNewTtl(e.target.value)}
@@ -150,13 +153,13 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
                     />
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button 
+                    <Button 
                       onClick={handleCreate}
                       disabled={!newValue || createMutation.isPending}
-                      className="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors disabled:opacity-50"
-                    >
+                      
+                     variant="primary" size="sm">
                       {createMutation.isPending ? 'Adding...' : <><Plus size={14} /> Add</>}
-                    </button>
+                    </Button>
                   </td>
                 </tr>
 
@@ -170,7 +173,7 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
                     editingRecordId === record.id ? (
                       <tr key={record.id} className="bg-slate-800/30">
                         <td className="px-4 py-3">
-                          <select 
+                          <Select 
                             value={editData.type} 
                             onChange={(e) => setEditData({...editData, type: e.target.value})}
                             className="w-full bg-[#12182b] border border-slate-700 rounded px-2 py-1 text-slate-200 outline-none focus:border-blue-500 text-sm font-mono"
@@ -181,10 +184,10 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
                             <option value="TXT">TXT</option>
                             <option value="MX">MX</option>
                             <option value="NS">NS</option>
-                          </select>
+                          </Select>
                         </td>
                         <td className="px-4 py-3">
-                          <input 
+                          <Input 
                             type="text" 
                             value={editData.name} 
                             onChange={(e) => setEditData({...editData, name: e.target.value})}
@@ -192,7 +195,7 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
                           />
                         </td>
                         <td className="px-4 py-3">
-                          <input 
+                          <Input 
                             type="text" 
                             value={editData.value} 
                             onChange={(e) => setEditData({...editData, value: e.target.value})}
@@ -200,7 +203,7 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
                           />
                         </td>
                         <td className="px-4 py-3">
-                          <input 
+                          <Input 
                             type="text" 
                             value={editData.ttl} 
                             onChange={(e) => setEditData({...editData, ttl: e.target.value})}
@@ -209,8 +212,8 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button 
-                              onClick={() => {
+                            <Button variant="outline" 
+                              onClick={ () => {
                                 updateMutation.mutate({
                                   recordId: record.id,
                                   record: {
@@ -226,14 +229,14 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
                               title="Save"
                             >
                               <Check size={16} />
-                            </button>
-                            <button 
-                              onClick={() => setEditingRecordId(null)}
+                            </Button>
+                            <Button variant="outline" 
+                              onClick={ () => setEditingRecordId(null)}
                               className="text-slate-500 hover:text-slate-300 p-1 rounded transition-colors"
                               title="Cancel"
                             >
                               <X size={16} />
-                            </button>
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -249,24 +252,24 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
                           {deleteConfirmId === record.id ? (
                             <div className="flex items-center justify-end gap-2">
                               <span className="text-red-400 text-xs flex items-center gap-1"><AlertTriangle size={12}/> Sure?</span>
-                              <button 
-                                onClick={() => deleteMutation.mutate(record.id)}
+                              <Button variant="outline" 
+                                onClick={ () => deleteMutation.mutate(record.id)}
                                 disabled={deleteMutation.isPending}
                                 className="text-red-400 hover:text-red-300 bg-red-400/10 hover:bg-red-400/20 px-2 py-1 rounded text-xs transition-colors"
                               >
                                 Yes
-                              </button>
-                              <button 
-                                onClick={() => setDeleteConfirmId(null)}
+                              </Button>
+                              <Button variant="outline" 
+                                onClick={ () => setDeleteConfirmId(null)}
                                 className="text-slate-400 hover:text-slate-300 px-2 py-1 text-xs"
                               >
                                 No
-                              </button>
+                              </Button>
                             </div>
                           ) : (
                             <div className="flex items-center justify-end gap-2">
-                              <button 
-                                onClick={() => {
+                              <Button variant="outline" 
+                                onClick={ () => {
                                   setEditData({ type: record.type, name: record.name, value: record.value, ttl: String(record.ttl) });
                                   setEditingRecordId(record.id);
                                 }}
@@ -274,14 +277,14 @@ export default function ManageDnsModal({ onClose, domainId, domainName }: Manage
                                 title="Edit Record"
                               >
                                 <Pencil size={16} />
-                              </button>
-                              <button 
-                                onClick={() => setDeleteConfirmId(record.id)}
+                              </Button>
+                              <Button variant="outline" 
+                                onClick={ () => setDeleteConfirmId(record.id)}
                                 className="text-slate-500 hover:text-red-400 p-1 rounded transition-colors"
                                 title="Delete Record"
                               >
                                 <Trash2 size={16} />
-                              </button>
+                              </Button>
                             </div>
                           )}
                         </td>

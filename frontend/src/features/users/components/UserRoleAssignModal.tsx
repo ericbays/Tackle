@@ -5,6 +5,7 @@ import type { User } from '../services/userApi';
 import { roleApi } from '../services/roleApi';
 import { X, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Button } from '../../../components/ui/Button';
 
 interface UserRoleAssignModalProps {
   user: User | null;
@@ -71,9 +72,9 @@ export default function UserRoleAssignModal({ user, onClose }: UserRoleAssignMod
             <h2 className="text-xl font-bold text-slate-100">Assign Roles</h2>
             <p className="text-slate-400 text-sm mt-1">Configuring access for <span className="text-blue-400">{user.username}</span></p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+          <Button onClick={onClose}  variant="ghost">
             <X size={20} />
-          </button>
+          </Button>
         </div>
         
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 flex flex-col">
@@ -115,20 +116,20 @@ export default function UserRoleAssignModal({ user, onClose }: UserRoleAssignMod
           )}
 
           <div className="pt-6 mt-auto shrink-0 flex justify-end gap-3 border-t border-slate-800">
-            <button 
+            <Button 
               type="button" 
               onClick={onClose}
-              className="px-4 py-2 mt-4 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-            >
+              
+             variant="ghost">
               Cancel
-            </button>
-            <button 
+            </Button>
+            <Button 
               type="submit" 
               disabled={mutation.isPending || loadingUserRoles}
-              className="mt-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
-            >
+              
+             variant="primary">
               {mutation.isPending ? 'Saving...' : 'Save Roles'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

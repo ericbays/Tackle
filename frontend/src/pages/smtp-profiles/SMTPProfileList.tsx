@@ -2,6 +2,10 @@ import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSMTPStore } from '../../store/smtpStore';
 import { Network, Server, ShieldCheck, Activity, AlertCircle, Plus, Copy, Trash2, Edit } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Card } from '../../components/ui/Card';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '../../components/ui/Table';
 
 export default function SMTPProfileList() {
     const { profiles, fetchProfiles, isLoading, deleteProfile, duplicateProfile, testProfile, isTesting } = useSMTPStore();
@@ -30,12 +34,12 @@ export default function SMTPProfileList() {
         }
     };
 
-    const getStatusColor = (status: string) => {
+    const getStatusVariant = (status: string) => {
         switch (status) {
-            case 'healthy': return 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20';
-            case 'error': return 'text-red-400 bg-red-400/10 border-red-500/20';
-            case 'untested': return 'text-amber-400 bg-amber-400/10 border-amber-500/20';
-            default: return 'text-slate-400 bg-slate-800 border-slate-700';
+            case 'healthy': return 'success';
+            case 'error': return 'destructive';
+            case 'untested': return 'warning';
+            default: return 'outline';
         }
     };
 
@@ -49,51 +53,52 @@ export default function SMTPProfileList() {
                     </h1>
                     <p className="text-slate-400 mt-2">Manage outbound email relay configurations globally available for campaign assignment.</p>
                 </div>
-                <Link
-                    to="/smtp-profiles/new"
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-all shadow-lg shadow-blue-500/20"
+                <Button
+                    onClick={() => window.location.href = '/smtp-profiles/new'}
+                    variant="primary"
+                    className="flex items-center gap-2"
                 >
                     <Plus className="w-4 h-4" />
                     New Profile
-                </Link>
+                </Button>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+            <Card className="overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-slate-300">
-                        <thead className="bg-slate-800/50 text-xs uppercase font-semibold text-slate-400 border-b border-slate-800">
-                            <tr>
-                                <th className="px-6 py-4">Profile Name</th>
-                                <th className="px-6 py-4">Relay Destination</th>
-                                <th className="px-6 py-4">Authentication</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800/50">
+                    <Table className="border-0 shadow-none rounded-none w-full text-left text-sm text-slate-300">
+                        <TableHeader className="bg-slate-800/50">
+                            <TableRow className="hover:bg-transparent text-xs uppercase font-semibold text-slate-400 border-b border-slate-800">
+                                <TableHead>Profile Name</TableHead>
+                                <TableHead>Relay Destination</TableHead>
+                                <TableHead>Authentication</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {isLoading && (!profiles || profiles.length === 0) ? (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">Loading profiles...</td>
-                                </tr>
+                                <TableRow>
+                                    <TableCell colSpan={5} className="py-12 text-center text-slate-500">Loading profiles...</TableCell>
+                                </TableRow>
                             ) : profiles.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">No SMTP profiles configured. Create one to get started.</td>
-                                </tr>
+                                <TableRow>
+                                    <TableCell colSpan={5} className="py-12 text-center text-slate-500">No SMTP profiles configured. Create one to get started.</TableCell>
+                                </TableRow>
                             ) : (
                                 Array.isArray(profiles) && profiles.map((p) => (
-                                    <tr key={p.id} className="hover:bg-slate-800/50 transition-colors group">
-                                        <td className="px-6 py-4 font-medium text-slate-200">
+                                    <TableRow key={p.id} className="group">
+                                        <TableCell className="font-medium text-slate-200">
                                             {p.name}
                                             <div className="text-xs text-slate-500 font-normal mt-1">{p.from_address}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
+                                        </TableCell>
+                                        <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <Server className="w-4 h-4 text-slate-500" />
                                                 <span className="font-mono text-xs">{p.host}:{p.port}</span>
                                             </div>
                                             <div className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">{p.tls_mode}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
+                                        </TableCell>
+                                        <TableCell>
                                             <div className="flex items-center gap-2">
                                                 {p.has_username ? (
                                                     <ShieldCheck className="w-4 h-4 text-emerald-500" />
@@ -102,54 +107,60 @@ export default function SMTPProfileList() {
                                                 )}
                                                 <span>{p.auth_type}</span>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border ${getStatusColor(p.status || '')}`}>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant={getStatusVariant(p.status || '') as any} className="gap-1.5 uppercase font-semibold">
                                                 {p.status === 'error' && <AlertCircle className="w-3.5 h-3.5" />}
                                                 {p.status === 'healthy' && <Activity className="w-3.5 h-3.5" />}
-                                                {p.status ? p.status.toUpperCase() : 'UNKNOWN'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
+                                                {p.status ? p.status : 'UNKNOWN'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity pr-2 gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
                                                     onClick={() => handleTest(p.id)}
                                                     disabled={isTesting}
                                                     title="Test connection"
-                                                    className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-md transition-colors disabled:opacity-50"
+                                                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
                                                 >
                                                     <Activity className="w-4 h-4" />
-                                                </button>
-                                                <button
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
                                                     onClick={() => handleDuplicate(p.id, p.name)}
                                                     title="Duplicate profile"
-                                                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
                                                 >
                                                     <Copy className="w-4 h-4" />
-                                                </button>
-                                                <Link
-                                                    to={`/smtp-profiles/${p.id}`}
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => window.location.href = `/smtp-profiles/${p.id}`}
                                                     title="Edit profile"
-                                                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
                                                 >
                                                     <Edit className="w-4 h-4" />
-                                                </Link>
-                                                <button
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
                                                     onClick={() => handleDelete(p.id, p.name)}
                                                     title="Delete profile"
-                                                    className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-md transition-colors"
+                                                    className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                </Button>
                                             </div>
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ))
                             )}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
-            </div>
+            </Card>
         </div>
     );
 }

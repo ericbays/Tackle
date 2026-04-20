@@ -7,6 +7,9 @@ import VariableInsertMenu from '../../components/email-templates/VariableInsertM
 import { ArrowLeft, Save } from 'lucide-react';
 import { useRef } from 'react';
 import { toast } from 'react-hot-toast';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
+import { Button } from '../../components/ui/Button';
 
 export default function EmailTemplateEditor() {
     const { id } = useParams();
@@ -87,9 +90,9 @@ export default function EmailTemplateEditor() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-slate-800 shrink-0">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => navigate('/email-templates')} className="text-slate-400 hover:text-white transition-colors">
+                    <Button variant="outline" onClick={ () => navigate('/email-templates')} className="text-slate-400 hover:text-white transition-colors">
                         <ArrowLeft className="w-5 h-5" />
-                    </button>
+                    </Button>
                     <div>
                         <h1 className="text-lg font-semibold text-white">
                             {isNew ? 'New Email Template' : (draft.name || 'Untitled Template')}
@@ -100,20 +103,20 @@ export default function EmailTemplateEditor() {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button 
-                        onClick={() => handleSave(false)}
+                    <Button variant="outline" 
+                        onClick={ () => handleSave(false)}
                         className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
                         disabled={saveMutation.isPending}
                     >
                         Save
-                    </button>
-                    <button 
-                        onClick={() => handleSave(true)}
+                    </Button>
+                    <Button variant="outline" 
+                        onClick={ () => handleSave(true)}
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-md transition-colors outline-none"
                         disabled={saveMutation.isPending}
                     >
                         <Save className="w-4 h-4" /> Save & Close
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -125,9 +128,9 @@ export default function EmailTemplateEditor() {
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-1">Template Name *</label>
-                            <input 
+                            <Input 
                                 type="text"
-                                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                                
                                 value={draft.name || ''}
                                 onChange={e => setDraft({...draft, name: e.target.value})}
                                 placeholder="E.g., Q2 IT Password Reset"
@@ -136,10 +139,10 @@ export default function EmailTemplateEditor() {
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-1">Subject Line *</label>
                             <div className="relative">
-                                <input 
+                                <Input 
                                     ref={subjectInputRef}
                                     type="text"
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 pr-20 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                                    
                                     value={draft.subject || ''}
                                     onChange={e => setDraft({...draft, subject: e.target.value})}
                                     placeholder="Action Required: {{target.first_name}}"
@@ -154,9 +157,9 @@ export default function EmailTemplateEditor() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-1">Description</label>
-                            <input 
+                            <Input 
                                 type="text"
-                                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                                
                                 value={draft.description || ''}
                                 onChange={e => setDraft({...draft, description: e.target.value})}
                             />
@@ -166,9 +169,9 @@ export default function EmailTemplateEditor() {
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-1">Sender Name *</label>
-                            <input 
+                            <Input 
                                 type="text"
-                                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                                
                                 value={draft.sender_name || ''}
                                 onChange={e => setDraft({...draft, sender_name: e.target.value})}
                                 placeholder="IT Support"
@@ -176,9 +179,9 @@ export default function EmailTemplateEditor() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-1">Sender Email *</label>
-                            <input 
+                            <Input 
                                 type="email"
-                                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                                
                                 value={draft.sender_email || ''}
                                 onChange={e => setDraft({...draft, sender_email: e.target.value})}
                                 placeholder="support@company.com"
@@ -187,8 +190,8 @@ export default function EmailTemplateEditor() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-400 mb-1">Category *</label>
-                                <select 
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                                <Select 
+                                    
                                     value={draft.category || ''}
                                     onChange={e => setDraft({...draft, category: e.target.value})}
                                 >
@@ -197,7 +200,7 @@ export default function EmailTemplateEditor() {
                                     <option value="Finance">Finance</option>
                                     <option value="Shipping">Shipping</option>
                                     <option value="Generic">Generic</option>
-                                </select>
+                                </Select>
                             </div>
                         </div>
                     </div>

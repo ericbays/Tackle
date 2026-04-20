@@ -2,6 +2,9 @@ import { Plus, X } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useCampaignStore } from '../../../store/campaignStore';
 import { useEmailTemplates, useSmtpProfiles } from '../../../hooks/useConfigurations';
+import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
+import { Button } from '../../../components/ui/Button';
 
 export default function EmailTemplateTab() {
     const { id } = useParams();
@@ -15,9 +18,9 @@ export default function EmailTemplateTab() {
             <section className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">Email Template Variants</h2>
-                    <button className="flex items-center gap-2 text-sm bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-md transition-colors">
+                    <Button  variant="outline">
                         <Plus className="w-4 h-4" /> Add Variant
-                    </button>
+                    </Button>
                 </div>
 
                 <div className="space-y-4">
@@ -25,25 +28,25 @@ export default function EmailTemplateTab() {
                         <div key={v.id} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
                             <div className="bg-slate-950/50 border-b border-slate-800 p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <input 
+                                    <Input 
                                         type="text" 
-                                        className="bg-transparent font-semibold text-slate-200 border-b border-transparent hover:border-slate-700 focus:border-blue-500 focus:outline-none transition-colors" 
+                                         
                                         value={v.label}
                                         onChange={(e) => updateEmailVariants(variants.map(variant => variant.id === v.id ? { ...variant, label: e.target.value } : variant))}
                                     />
                                     <span className="text-slate-500 font-medium">{v.percentage}% traffic</span>
                                 </div>
-                                <button 
-                                    onClick={() => updateEmailVariants(variants.filter(variant => variant.id !== v.id))}
+                                <Button variant="outline" 
+                                    onClick={ () => updateEmailVariants(variants.filter(variant => variant.id !== v.id))}
                                     className="text-slate-600 hover:text-red-400 transition-colors"
                                 >
                                     <X className="w-4 h-4" />
-                                </button>
+                                </Button>
                             </div>
                             <div className="p-6">
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-slate-400 mb-2">Selected Template</label>
-                                    <select 
+                                    <Select 
                                         value={v.template || ''}
                                         onChange={(e) => updateEmailVariants(variants.map(variant => variant.id === v.id ? { ...variant, template: e.target.value } : variant))}
                                         className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
@@ -52,7 +55,7 @@ export default function EmailTemplateTab() {
                                         {emailTemplates.map(t => (
                                             <option key={t.id} value={t.id}>{t.name}</option>
                                         ))}
-                                    </select>
+                                    </Select>
                                     <div className="mt-2 text-xs">
                                         <Link to="/email-templates/new" className="text-blue-500 hover:text-blue-400" target="_blank">Create New Template →</Link>
                                     </div>
@@ -102,23 +105,23 @@ export default function EmailTemplateTab() {
                  {isLoadingSmtp ? (
                      <div className="text-slate-500 text-sm py-2">Loading configured SMTP profiles...</div>
                  ) : (
-                     <select className="w-full max-w-lg bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
+                     <Select >
                          <option value="">Select an SMTP Configuration...</option>
                          {smtpProfiles.map(profile => (
                              <option key={profile.id} value={profile.id}>{profile.name}</option>
                          ))}
-                     </select>
+                     </Select>
                  )}
             </section>
 
             <div className="flex justify-end pt-4">
-                <button 
-                    onClick={() => saveCampaign(id)}
+                <Button variant="outline" 
+                    onClick={ () => saveCampaign(id)}
                     disabled={isSaving}
                     className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-md font-medium transition-colors"
                 >
                     {isSaving ? 'Saving...' : 'Save Email Configurations'}
-                </button>
+                </Button>
             </div>
         </div>
     );

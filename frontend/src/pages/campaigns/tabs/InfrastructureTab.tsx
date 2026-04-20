@@ -5,6 +5,8 @@ import { useSMTPStore } from '../../../store/smtpStore';
 import { useCloudCredentials, useDomains } from '../../../hooks/useConfigurations';
 import PermissionGate from '../../../components/auth/PermissionGate';
 import { useEffect } from 'react';
+import { Select } from '../../../components/ui/Select';
+import { Button } from '../../../components/ui/Button';
 
 export const PROVIDER_CONFIGS: Record<string, { regions: string[]; sizes: string[] }> = {
     aws: {
@@ -50,7 +52,7 @@ export default function InfrastructureTab() {
                             {isLoadingCreds ? (
                                 <div className="text-slate-500 text-sm py-2">Loading configured providers...</div>
                             ) : (
-                                <select 
+                                <Select 
                                     value={infrastructure.provider}
                                     onChange={(e) => updateInfrastructure({ provider: e.target.value, region: '', instanceSize: '' })}
                                     className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
@@ -61,12 +63,12 @@ export default function InfrastructureTab() {
                                             {cred.display_name} ({cred.provider_type})
                                         </option>
                                     ))}
-                                </select>
+                                </Select>
                             )}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-2">Region</label>
-                            <select 
+                            <Select 
                                 value={infrastructure.region}
                                 onChange={(e) => updateInfrastructure({ region: e.target.value })}
                                 className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 disabled:opacity-50"
@@ -76,11 +78,11 @@ export default function InfrastructureTab() {
                                 {selectedConfig.regions.map(r => (
                                     <option key={r} value={r}>{r}</option>
                                 ))}
-                            </select>
+                            </Select>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-2">Instance Size</label>
-                            <select 
+                            <Select 
                                 value={infrastructure.instanceSize}
                                 onChange={(e) => updateInfrastructure({ instanceSize: e.target.value })}
                                 className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 disabled:opacity-50"
@@ -90,7 +92,7 @@ export default function InfrastructureTab() {
                                 {selectedConfig.sizes.map(s => (
                                     <option key={s} value={s}>{s}</option>
                                 ))}
-                            </select>
+                            </Select>
                             {infrastructure.instanceSize && (
                                 <p className="mt-2 text-xs text-slate-500">Recommended for your configured targets</p>
                             )}
@@ -113,7 +115,7 @@ export default function InfrastructureTab() {
 
                     <div className="max-w-md">
                         <label className="block text-sm font-medium text-slate-400 mb-2">Outgoing Mail Server</label>
-                        <select 
+                        <Select 
                             value={infrastructure.smtpProfileId || ''}
                             onChange={(e) => updateInfrastructure({ smtpProfileId: e.target.value })}
                             className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
@@ -124,7 +126,7 @@ export default function InfrastructureTab() {
                                     {p.name} ({p.host}:{p.port})
                                 </option>
                             ))}
-                        </select>
+                        </Select>
                         <p className="mt-2 text-xs text-slate-500">This profile will be used to dispatch the phishing email payloads.</p>
                     </div>
                 </div>
@@ -143,7 +145,7 @@ export default function InfrastructureTab() {
                             {isLoadingDomains ? (
                                 <div className="text-slate-500 text-sm py-2">Loading configured domains...</div>
                             ) : (
-                                <select 
+                                <Select 
                                     value={infrastructure.domain}
                                     onChange={(e) => updateInfrastructure({ domain: e.target.value })}
                                     className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
@@ -154,7 +156,7 @@ export default function InfrastructureTab() {
                                             {domain.domain_name}
                                         </option>
                                     ))}
-                                </select>
+                                </Select>
                             )}
                             <p className="mt-2 text-xs text-slate-500">Must be pre-registered via Tackle</p>
                         </div>
@@ -182,13 +184,13 @@ export default function InfrastructureTab() {
 
             <div className="flex justify-end pt-4">
                 <PermissionGate permission="campaigns:write">
-                    <button 
-                        onClick={() => saveCampaign(id)}
+                    <Button variant="outline" 
+                        onClick={ () => saveCampaign(id)}
                         disabled={isSaving}
                         className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-md font-medium transition-colors"
                     >
                         {isSaving ? 'Saving...' : 'Save Infrastructure'}
-                    </button>
+                    </Button>
                 </PermissionGate>
             </div>
         </div>

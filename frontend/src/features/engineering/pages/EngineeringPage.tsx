@@ -3,6 +3,7 @@ import { Cloud, Globe, Server } from 'lucide-react';
 import ProvidersTab from '../components/ProvidersTab';
 import DomainsTab from '../components/DomainsTab';
 import InfrastructureTab from '../components/InfrastructureTab';
+import { Button } from '../../../components/ui/Button';
 
 export default function EngineeringPage() {
   const [activeTab, setActiveTab] = useState<'providers' | 'domains' | 'infrastructure'>('providers');
@@ -17,8 +18,8 @@ export default function EngineeringPage() {
 
       {/* Tabs Navigation */}
       <div className="flex border-b border-slate-800">
-        <button
-          onClick={() => setActiveTab('providers')}
+        <Button variant="outline"
+          onClick={ () => setActiveTab('providers')}
           className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 ${
             activeTab === 'providers'
               ? 'border-blue-500 text-blue-400'
@@ -27,9 +28,9 @@ export default function EngineeringPage() {
         >
           <Cloud size={18} />
           Providers
-        </button>
-        <button
-          onClick={() => setActiveTab('domains')}
+        </Button>
+        <Button variant="outline"
+          onClick={ () => setActiveTab('domains')}
           className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 ${
             activeTab === 'domains'
               ? 'border-blue-500 text-blue-400'
@@ -38,9 +39,9 @@ export default function EngineeringPage() {
         >
           <Globe size={18} />
           Domains
-        </button>
-        <button
-          onClick={() => setActiveTab('infrastructure')}
+        </Button>
+        <Button variant="outline"
+          onClick={ () => setActiveTab('infrastructure')}
           className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 ${
             activeTab === 'infrastructure'
               ? 'border-blue-500 text-blue-400'
@@ -49,7 +50,7 @@ export default function EngineeringPage() {
         >
           <Server size={18} />
           Infrastructure
-        </button>
+        </Button>
       </div>
 
       {/* Main Tab Content Region */}

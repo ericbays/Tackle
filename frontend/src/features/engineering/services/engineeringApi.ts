@@ -51,6 +51,13 @@ export const engineeringApi = {
     const res = await api.put(`/settings/cloud-credentials/${id}`, data);
     return res.data.data;
   },
+  deleteCloudCredential: async (id: string): Promise<void> => {
+    await api.delete(`/settings/cloud-credentials/${id}`);
+  },
+  testCloudCredential: async (id: string): Promise<any> => {
+    const res = await api.post(`/settings/cloud-credentials/${id}/test`);
+    return res.data.data;
+  },
 
   // Domain Providers
   getDomainProviders: async (): Promise<DomainProvider[]> => {

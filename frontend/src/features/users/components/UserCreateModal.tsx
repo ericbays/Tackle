@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { userApi } from '../services/userApi';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Input } from '../../../components/ui/Input';
+import { Button } from '../../../components/ui/Button';
 
 interface UserCreateModalProps {
   isOpen: boolean;
@@ -44,18 +46,18 @@ export default function UserCreateModal({ isOpen, onClose }: UserCreateModalProp
       <div className="bg-[#12182b] border border-slate-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-slate-800">
           <h2 className="text-xl font-bold text-slate-100">Create New User</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+          <Button onClick={onClose}  variant="ghost">
             <X size={20} />
-          </button>
+          </Button>
         </div>
         
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Username</label>
-            <input 
+            <Input 
               type="text" 
               required
-              className="w-full bg-[#0a0f1a] border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              
               value={formData.username}
               onChange={e => setFormData({...formData, username: e.target.value})}
             />
@@ -63,10 +65,10 @@ export default function UserCreateModal({ isOpen, onClose }: UserCreateModalProp
           
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Email Address</label>
-            <input 
+            <Input 
               type="email" 
               required
-              className="w-full bg-[#0a0f1a] border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              
               value={formData.email}
               onChange={e => setFormData({...formData, email: e.target.value})}
             />
@@ -74,10 +76,10 @@ export default function UserCreateModal({ isOpen, onClose }: UserCreateModalProp
 
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Display Name</label>
-            <input 
+            <Input 
               type="text" 
               required
-              className="w-full bg-[#0a0f1a] border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              
               value={formData.display_name}
               onChange={e => setFormData({...formData, display_name: e.target.value})}
             />
@@ -85,10 +87,10 @@ export default function UserCreateModal({ isOpen, onClose }: UserCreateModalProp
 
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Initial Password</label>
-            <input 
+            <Input 
               type="password" 
               required
-              className="w-full bg-[#0a0f1a] border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              
               value={formData.password}
               onChange={e => setFormData({...formData, password: e.target.value})}
             />
@@ -108,20 +110,20 @@ export default function UserCreateModal({ isOpen, onClose }: UserCreateModalProp
           </div>
 
           <div className="pt-6 flex justify-end gap-3">
-            <button 
+            <Button 
               type="button" 
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-            >
+              
+             variant="ghost">
               Cancel
-            </button>
-            <button 
+            </Button>
+            <Button 
               type="submit" 
               disabled={mutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
-            >
+              
+             variant="primary">
               {mutation.isPending ? 'Creating...' : 'Create User'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

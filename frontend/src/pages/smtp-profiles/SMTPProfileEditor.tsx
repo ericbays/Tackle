@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSMTPStore } from '../../store/smtpStore';
 import { Network, Server, ShieldCheck, Mail, Sliders, Save, ArrowLeft, Loader2 } from 'lucide-react';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
+import { Button } from '../../components/ui/Button';
 
 export default function SMTPProfileEditor() {
     const { id } = useParams();
@@ -114,14 +117,14 @@ export default function SMTPProfileEditor() {
                         {isNew ? 'New SMTP Profile' : 'Edit SMTP Profile'}
                     </h1>
                 </div>
-                <button
+                <Button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium rounded-lg transition-all shadow-lg shadow-blue-500/20"
-                >
+                    
+                 variant="primary">
                     {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                     Save Profile
-                </button>
+                </Button>
             </div>
 
             <form onSubmit={handleSave} className="space-y-6">
@@ -134,7 +137,7 @@ export default function SMTPProfileEditor() {
                     <div className="p-6 grid grid-cols-2 gap-6">
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-slate-400 mb-1">Profile Name</label>
-                            <input
+                            <Input
                                 type="text"
                                 required
                                 value={formData.name}
@@ -145,7 +148,7 @@ export default function SMTPProfileEditor() {
                         </div>
                         <div className="col-span-2 sm:col-span-1">
                             <label className="block text-sm font-medium text-slate-400 mb-1">Hostname</label>
-                            <input
+                            <Input
                                 type="text"
                                 required
                                 value={formData.host}
@@ -156,7 +159,7 @@ export default function SMTPProfileEditor() {
                         </div>
                         <div className="col-span-2 sm:col-span-1">
                             <label className="block text-sm font-medium text-slate-400 mb-1">Port</label>
-                            <input
+                            <Input
                                 type="number"
                                 required
                                 value={formData.port}
@@ -166,7 +169,7 @@ export default function SMTPProfileEditor() {
                         </div>
                         <div className="col-span-2 sm:col-span-1">
                             <label className="block text-sm font-medium text-slate-400 mb-1">TLS Mode</label>
-                            <select
+                            <Select
                                 value={formData.tls_mode}
                                 onChange={e => setFormData({ ...formData, tls_mode: e.target.value })}
                                 className="w-full bg-slate-800/50 border border-slate-700 rounded-md px-4 py-2 text-white focus:outline-none focus:border-blue-500"
@@ -174,7 +177,7 @@ export default function SMTPProfileEditor() {
                                 <option value="NONE">None</option>
                                 <option value="STARTTLS">STARTTLS (Usually Port 587)</option>
                                 <option value="TLS">Implicit TLS (Usually Port 465)</option>
-                            </select>
+                            </Select>
                         </div>
                         <div className="col-span-2 sm:col-span-1 flex items-center pt-6">
                             <label className="flex items-center gap-3 cursor-pointer">
@@ -199,7 +202,7 @@ export default function SMTPProfileEditor() {
                     <div className="p-6 grid grid-cols-2 gap-6">
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-slate-400 mb-1">Auth Type</label>
-                            <select
+                            <Select
                                 value={formData.auth_type}
                                 onChange={e => setFormData({ ...formData, auth_type: e.target.value })}
                                 className="w-full bg-slate-800/50 border border-slate-700 rounded-md px-4 py-2 text-white focus:outline-none focus:border-blue-500"
@@ -208,13 +211,13 @@ export default function SMTPProfileEditor() {
                                 <option value="LOGIN">LOGIN</option>
                                 <option value="PLAIN">PLAIN</option>
                                 <option value="CRAM-MD5">CRAM-MD5</option>
-                            </select>
+                            </Select>
                         </div>
                         {formData.auth_type !== 'NONE' && (
                             <>
                                 <div className="col-span-2 sm:col-span-1">
                                     <label className="block text-sm font-medium text-slate-400 mb-1">Username</label>
-                                    <input
+                                    <Input
                                         type="text"
                                         required={isNew}
                                         value={formData.username}
@@ -225,7 +228,7 @@ export default function SMTPProfileEditor() {
                                 </div>
                                 <div className="col-span-2 sm:col-span-1">
                                     <label className="block text-sm font-medium text-slate-400 mb-1">Password / App Password</label>
-                                    <input
+                                    <Input
                                         type="password"
                                         required={isNew}
                                         value={formData.password}
@@ -248,7 +251,7 @@ export default function SMTPProfileEditor() {
                     <div className="p-6 grid grid-cols-2 gap-6">
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-slate-400 mb-1">Global From Address</label>
-                            <input
+                            <Input
                                 type="email"
                                 required
                                 value={formData.from_address}
@@ -260,7 +263,7 @@ export default function SMTPProfileEditor() {
                         </div>
                         <div className="col-span-2 sm:col-span-1">
                             <label className="block text-sm font-medium text-slate-400 mb-1">Default From Name</label>
-                            <input
+                            <Input
                                 type="text"
                                 value={formData.from_name}
                                 onChange={e => setFormData({ ...formData, from_name: e.target.value })}
@@ -270,7 +273,7 @@ export default function SMTPProfileEditor() {
                         </div>
                         <div className="col-span-2 sm:col-span-1">
                             <label className="block text-sm font-medium text-slate-400 mb-1">Default Reply-To</label>
-                            <input
+                            <Input
                                 type="email"
                                 value={formData.reply_to}
                                 onChange={e => setFormData({ ...formData, reply_to: e.target.value })}
@@ -280,7 +283,7 @@ export default function SMTPProfileEditor() {
                         </div>
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-slate-400 mb-1">Custom HELO Domain (Optional)</label>
-                            <input
+                            <Input
                                 type="text"
                                 value={formData.custom_helo}
                                 onChange={e => setFormData({ ...formData, custom_helo: e.target.value })}
@@ -300,7 +303,7 @@ export default function SMTPProfileEditor() {
                     <div className="p-6 grid grid-cols-2 gap-6">
                         <div className="col-span-2 sm:col-span-1">
                             <label className="block text-sm font-medium text-slate-400 mb-1">Max Concurrent Connections</label>
-                            <input
+                            <Input
                                 type="number"
                                 required
                                 value={formData.max_connections}
@@ -310,7 +313,7 @@ export default function SMTPProfileEditor() {
                         </div>
                         <div className="col-span-2 sm:col-span-1">
                             <label className="block text-sm font-medium text-slate-400 mb-1">Global Rate Limit (Emails / Hour)</label>
-                            <input
+                            <Input
                                 type="number"
                                 value={formData.max_send_rate || ''}
                                 onChange={e => setFormData({ ...formData, max_send_rate: parseInt(e.target.value) || 0 })}
@@ -320,7 +323,7 @@ export default function SMTPProfileEditor() {
                         </div>
                         <div className="col-span-2 sm:col-span-1">
                             <label className="block text-sm font-medium text-slate-400 mb-1">Connection Timeout (Seconds)</label>
-                            <input
+                            <Input
                                 type="number"
                                 required
                                 value={formData.timeout_connect}
@@ -330,7 +333,7 @@ export default function SMTPProfileEditor() {
                         </div>
                         <div className="col-span-2 sm:col-span-1">
                             <label className="block text-sm font-medium text-slate-400 mb-1">Dial/Send Timeout (Seconds)</label>
-                            <input
+                            <Input
                                 type="number"
                                 required
                                 value={formData.timeout_send}

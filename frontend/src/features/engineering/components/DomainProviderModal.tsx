@@ -3,6 +3,9 @@ import { X } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { engineeringApi } from '../services/engineeringApi';
 import toast from 'react-hot-toast';
+import { Select } from '../../../components/ui/Select';
+import { Input } from '../../../components/ui/Input';
+import { Button } from '../../../components/ui/Button';
 
 interface DomainProviderModalProps {
   onClose: () => void;
@@ -109,37 +112,35 @@ export default function DomainProviderModal({ onClose, initialData }: DomainProv
       <div className="bg-[#12182b] border border-slate-700 w-full max-w-lg rounded-xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-slate-100">{initialData ? 'Edit Domain Registrar' : 'Add Domain Registrar'}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 p-1 rounded-md transition-colors hover:bg-slate-800">
+          <Button variant="ghost" size="icon" onClick={onClose} className="text-slate-400 hover:text-slate-200 p-1">
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Provider Type</label>
-            <select
+            <Select
               required
               disabled={!!initialData}
               value={providerType}
               onChange={(e) => setProviderType(e.target.value as any)}
-              className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 disabled:opacity-60"
             >
               <option value="namecheap">Namecheap</option>
               <option value="godaddy">GoDaddy</option>
               <option value="route53">Amazon Route 53</option>
               <option value="azure_dns">Azure DNS</option>
-            </select>
+            </Select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Display Name</label>
-            <input
+            <Input
               required
               type="text"
               placeholder="e.g., Primary Namecheap"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500"
             />
           </div>
 
@@ -149,15 +150,15 @@ export default function DomainProviderModal({ onClose, initialData }: DomainProv
               <div className="text-xs text-slate-400 mb-2">Note: To use Namecheap API, you must whitelist your external IP Address inside your Namecheap dashboard first.</div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">API User</label>
-                <input required={!initialData} type="text" value={ncApiUser} onChange={(e) => setNcApiUser(e.target.value)} placeholder={initialData ? "Leave blank to keep unchanged" : ""} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input required={!initialData} type="text" value={ncApiUser} onChange={(e) => setNcApiUser(e.target.value)} placeholder={initialData ? "Leave blank to keep unchanged" : ""} className="font-mono" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">API Key</label>
-                <input required={!initialData} type="password" value={ncApiKey} onChange={(e) => setNcApiKey(e.target.value)} placeholder={initialData ? "Leave blank to keep unchanged" : ""} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input required={!initialData} type="password" value={ncApiKey} onChange={(e) => setNcApiKey(e.target.value)} placeholder={initialData ? "Leave blank to keep unchanged" : ""} className="font-mono" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">Whitelisted Client IP</label>
-                <input required={!initialData} type="text" placeholder={initialData ? "Leave blank to keep unchanged" : "e.g., 203.0.113.10"} value={ncClientIp} onChange={(e) => setNcClientIp(e.target.value)} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input required={!initialData} type="text" placeholder={initialData ? "Leave blank to keep unchanged" : "e.g., 203.0.113.10"} value={ncClientIp} onChange={(e) => setNcClientIp(e.target.value)} className="font-mono" />
               </div>
             </div>
           )}
@@ -167,18 +168,18 @@ export default function DomainProviderModal({ onClose, initialData }: DomainProv
             <div className="grid grid-cols-1 gap-4 bg-slate-800/30 p-4 rounded-lg border border-slate-700/50">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">Environment</label>
-                <select value={gdEnvironment} onChange={(e) => setGdEnvironment(e.target.value as any)} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500">
+                <Select value={gdEnvironment} onChange={(e) => setGdEnvironment(e.target.value as any)}>
                   <option value="production">Production</option>
                   <option value="ote">OTE (Testing)</option>
-                </select>
+                </Select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">API Key</label>
-                <input required type="text" value={gdApiKey} onChange={(e) => setGdApiKey(e.target.value)} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input required type="text" value={gdApiKey} onChange={(e) => setGdApiKey(e.target.value)} className="font-mono" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">API Secret</label>
-                <input required type="password" value={gdApiSecret} onChange={(e) => setGdApiSecret(e.target.value)} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input required type="password" value={gdApiSecret} onChange={(e) => setGdApiSecret(e.target.value)} className="font-mono" />
               </div>
             </div>
           )}
@@ -188,19 +189,19 @@ export default function DomainProviderModal({ onClose, initialData }: DomainProv
             <div className="grid grid-cols-1 gap-4 bg-slate-800/30 p-4 rounded-lg border border-slate-700/50">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">AWS Access Key ID</label>
-                <input required type="text" value={r53AccessKey} onChange={(e) => setR53AccessKey(e.target.value)} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input required type="text" value={r53AccessKey} onChange={(e) => setR53AccessKey(e.target.value)} className="font-mono" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">AWS Secret Access Key</label>
-                <input required type="password" value={r53SecretKey} onChange={(e) => setR53SecretKey(e.target.value)} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input required type="password" value={r53SecretKey} onChange={(e) => setR53SecretKey(e.target.value)} className="font-mono" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">Region</label>
-                <input required type="text" placeholder="us-east-1" value={r53Region} onChange={(e) => setR53Region(e.target.value)} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input required type="text" placeholder="us-east-1" value={r53Region} onChange={(e) => setR53Region(e.target.value)} className="font-mono" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">IAM Role ARN (Optional)</label>
-                <input type="text" placeholder="arn:aws:iam::..." value={r53RoleArn} onChange={(e) => setR53RoleArn(e.target.value)} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input type="text" placeholder="arn:aws:iam::..." value={r53RoleArn} onChange={(e) => setR53RoleArn(e.target.value)} className="font-mono" />
               </div>
             </div>
           )}
@@ -210,45 +211,45 @@ export default function DomainProviderModal({ onClose, initialData }: DomainProv
             <div className="grid grid-cols-1 gap-4 bg-slate-800/30 p-4 rounded-lg border border-slate-700/50">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">Tenant ID</label>
-                <input required type="text" value={azTenantId} onChange={(e) => setAzTenantId(e.target.value)} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input required type="text" value={azTenantId} onChange={(e) => setAzTenantId(e.target.value)} className="font-mono" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">Subscription ID</label>
-                <input required type="text" value={azSubId} onChange={(e) => setAzSubId(e.target.value)} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input required type="text" value={azSubId} onChange={(e) => setAzSubId(e.target.value)} className="font-mono" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">Client ID</label>
-                <input required type="text" value={azClientId} onChange={(e) => setAzClientId(e.target.value)} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input required type="text" value={azClientId} onChange={(e) => setAzClientId(e.target.value)} className="font-mono" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">Client Secret</label>
-                <input required type="password" value={azClientSecret} onChange={(e) => setAzClientSecret(e.target.value)} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input required type="password" value={azClientSecret} onChange={(e) => setAzClientSecret(e.target.value)} className="font-mono" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">Resource Group</label>
-                <input required type="text" value={azResourceGroup} onChange={(e) => setAzResourceGroup(e.target.value)} className="w-full bg-[#1a2235] border border-slate-700 rounded-md px-3 py-2 text-slate-200 outline-none focus:border-blue-500 font-mono text-sm" />
+                <Input required type="text" value={azResourceGroup} onChange={(e) => setAzResourceGroup(e.target.value)} className="font-mono" />
               </div>
             </div>
           )}
 
           <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-800">
-            <button
+            <Button
+              variant="ghost"
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-transparent text-slate-300 hover:text-white rounded-md transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               type="submit"
               disabled={mutation.isPending}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {mutation.isPending && (
                 <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
               )}
               {mutation.isPending ? 'Saving...' : initialData ? 'Update Registrar' : 'Save Registrar'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
