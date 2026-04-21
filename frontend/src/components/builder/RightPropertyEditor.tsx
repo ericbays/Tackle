@@ -24,6 +24,7 @@ const Accordion = ({ title, children, defaultOpen = false }: { title: string, ch
 
 export const RightPropertyEditor = () => {
     const [activeTab, setActiveTab] = useState<'content' | 'style' | 'advanced'>('content');
+    const [styleState, setStyleState] = useState<'normal' | 'hover' | 'active'>('normal');
     
     const project = useBuilderStore(state => state.project);
     const activePageId = useBuilderStore(state => state.activePageId);
@@ -90,15 +91,19 @@ export const RightPropertyEditor = () => {
             }
         }
 
+        const targetProperty = styleState === 'normal' ? 'style' : `${styleState}_style`;
+        const currentStyles = selectedNode!.properties?.[targetProperty] || {};
+
         updateNode(activePageId, selectedNode!.component_id, {
             properties: { 
                 ...selectedNode!.properties, 
-                style: { ...(selectedNode!.properties?.style || {}), [key]: sanitizedValue } 
+                [targetProperty]: { ...currentStyles, [key]: sanitizedValue } 
             }
         });
     };
 
-    const styles = selectedNode.properties?.style || {};
+    const targetProperty = styleState === 'normal' ? 'style' : `${styleState}_style`;
+    const styles = selectedNode.properties?.[targetProperty] || {};
     const props = selectedNode.properties || {};
 
     const InputRow = ({ label, value, onChange, placeholder = "", type = "text", helpText }: any) => {
@@ -271,12 +276,79 @@ export const RightPropertyEditor = () => {
                                 <InputRow label="Alt Text" value={props.alt} onChange={(v: string) => handlePropChange('alt', v)} placeholder="Description for accessibility" helpText="Description of the image for screen readers and search engines. Crucial for accessibility." />
                             </div>
                         )}
+                        {selectedNode.type === 'video_embed' && (
+                            <div className="space-y-4">
+                                <InputRow label="Video Embed URL" value={props.src} onChange={(v: string) => handlePropChange('src', v)} placeholder="https://www.youtube.com/embed/..." helpText="URL for the embedded iframe video source." />
+                            </div>
+                        )}
+                        {['select', 'checkbox', 'radio', 'tabs', 'accordion'].includes(selectedNode.type) && (
+                            <div className="space-y-3 pt-4 border-t border-slate-800">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Options / Items</label>
+                                <p className="text-[10px] text-slate-500 mb-2 leading-relaxed">Manage the internal list items for this component.</p>
+                                <div className="space-y-2">
+                                    {(props.options || []).map((opt: any, idx: number) => (
+                                        <div key={idx} className="flex gap-2">
+                                            <input 
+                                                className="w-1/2 bg-slate-950 border border-slate-700/80 rounded py-1.5 px-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+                                                placeholder="Label"
+                                                value={opt.label}
+                                                onChange={e => {
+                                                    const newOpts = [...(props.options || [])];
+                                                    newOpts[idx] = { ...newOpts[idx], label: e.target.value };
+                                                    handlePropChange('options', newOpts);
+                                                }}
+                                            />
+                                            <input 
+                                                className="w-1/2 bg-slate-950 border border-slate-700/80 rounded py-1.5 px-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+                                                placeholder="Value"
+                                                value={opt.value}
+                                                onChange={e => {
+                                                    const newOpts = [...(props.options || [])];
+                                                    newOpts[idx] = { ...newOpts[idx], value: e.target.value };
+                                                    handlePropChange('options', newOpts);
+                                                }}
+                                            />
+                                            <button 
+                                                onClick={() => {
+                                                    const newOpts = (props.options || []).filter((_: any, i: number) => i !== idx);
+                                                    handlePropChange('options', newOpts);
+                                                }}
+                                                className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded flex-shrink-0"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <Button variant="outline" size="sm"
+                                        onClick={() => {
+                                            const newOpts = [...(props.options || []), { label: 'New Item', value: 'new_item' }];
+                                            handlePropChange('options', newOpts);
+                                        }}
+                                        className="w-full text-xs text-slate-400 bg-slate-800/50 hover:bg-slate-800 border-slate-700 mt-2"
+                                    >
+                                        + Add Option
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
                 {/* Style Editor */}
                 {activeTab === 'style' && (
                     <div className="space-y-1">
+                        <div className="flex bg-slate-950 p-1 rounded-md mx-4 mt-4 mb-2 shadow-inner border border-slate-800">
+                            {(['normal', 'hover', 'active'] as const).map(state => (
+                                <button
+                                    key={state}
+                                    onClick={() => setStyleState(state)}
+                                    className={`flex-1 text-[10px] uppercase tracking-wider font-semibold py-1.5 rounded transition-all ${styleState === state ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'}`}
+                                >
+                                    {state}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="px-4 pb-2 text-[10px] text-slate-500 text-center uppercase tracking-widest">{styleState} State Styling</div>
                         <Accordion title="Layout & Flexbox" defaultOpen={true}>
                             <SelectRow 
                                 label="Display" 

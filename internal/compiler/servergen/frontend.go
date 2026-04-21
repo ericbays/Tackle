@@ -163,16 +163,15 @@ func renderNode(node map[string]any, indent int) string {
 
 	// Parse arbitrary raw styles back into JSON object for React style={} prop
 	styleStr := getString(props, "inline_style")
-	styleObj := "{}"
-	if styleStr != "" {
+	styleMap := getMapObj(props, "style")
+
+	if styleStr != "" && len(styleMap) == 0 {
 		parts := strings.Split(styleStr, ";")
-		styleMap := make(map[string]string)
 		for _, part := range parts {
 			if strings.Contains(part, ":") {
 				kv := strings.SplitN(part, ":", 2)
 				k := strings.TrimSpace(kv[0])
 				v := strings.TrimSpace(kv[1])
-				// Convert kebab-case to camelCase
 				words := strings.Split(k, "-")
 				for i := 1; i < len(words); i++ {
 					words[i] = strings.Title(words[i])
@@ -181,33 +180,82 @@ func renderNode(node map[string]any, indent int) string {
 				styleMap[camelK] = v
 			}
 		}
+	}
+
+	styleObj := "{}"
+	if len(styleMap) > 0 {
 		if b, err := json.Marshal(styleMap); err == nil {
 			styleObj = string(b)
 		}
 	}
 
+	nodeID := getString(node, "component_id")
+	classPrefix := ""
+	if nodeID != "" {
+		classPrefix = fmt.Sprintf(" className=\"css-%s\"", nodeID)
+	}
+
+	hoverStyles := getMapObj(props, "hover_style")
+	activeStyles := getMapObj(props, "active_style")
+	var dynamicStyles string
+	if len(hoverStyles) > 0 || len(activeStyles) > 0 {
+		var sb strings.Builder
+		if len(hoverStyles) > 0 {
+			sb.WriteString(fmt.Sprintf(".css-%s:hover { ", nodeID))
+			for k, v := range hoverStyles {
+				sb.WriteString(fmt.Sprintf("%s: %s !important; ", toCSSKebab(k), v))
+			}
+			sb.WriteString("} ")
+		}
+		if len(activeStyles) > 0 {
+			sb.WriteString(fmt.Sprintf(".css-%s:active { ", nodeID))
+			for k, v := range activeStyles {
+				sb.WriteString(fmt.Sprintf("%s: %s !important; ", toCSSKebab(k), v))
+			}
+			sb.WriteString("} ")
+		}
+		dynamicStyles = fmt.Sprintf("\n%s<style dangerouslySetInnerHTML={{ __html: `%s` }} />\n", tabs+"\t", sb.String())
+	}
+
 	content := getString(props, "content")
+	if content == "" {
+		content = getString(props, "text")
+	}
 	
 	switch nodeType {
-	case "container", "row", "column":
-		out := fmt.Sprintf("%s<div style={%s}>\n", tabs, styleObj)
+	case "container", "row", "column", "tabs", "accordion":
+		out := fmt.Sprintf("%s<div%s style={%s}>\n%s", tabs, classPrefix, styleObj, dynamicStyles)
 		for _, child := range children {
 			out += renderNode(child, indent+1)
 		}
 		out += fmt.Sprintf("%s</div>\n", tabs)
 		return out
+	case "navbar":
+		out := fmt.Sprintf("%s<nav%s style={%s}>\n%s", tabs, classPrefix, styleObj, dynamicStyles)
+		for _, child := range children {
+			out += renderNode(child, indent+1)
+		}
+		out += fmt.Sprintf("%s</nav>\n", tabs)
+		return out
+	case "footer":
+		out := fmt.Sprintf("%s<footer%s style={%s}>\n%s", tabs, classPrefix, styleObj, dynamicStyles)
+		for _, child := range children {
+			out += renderNode(child, indent+1)
+		}
+		out += fmt.Sprintf("%s</footer>\n", tabs)
+		return out
 	case "text":
-		return fmt.Sprintf("%s<div style={%s}>%s</div>\n", tabs, styleObj, content)
+		return fmt.Sprintf("%s<div%s style={%s}>%s%s</div>\n", tabs, classPrefix, styleObj, dynamicStyles, content)
 	case "heading":
 		level := getString(props, "level")
 		if level == "" { level = "h2" }
-		return fmt.Sprintf("%s<%s style={%s}>%s</%s>\n", tabs, level, styleObj, content, level)
+		return fmt.Sprintf("%s<%s%s style={%s}>%s%s</%s>\n", tabs, level, classPrefix, styleObj, dynamicStyles, content, level)
 	case "paragraph":
-		return fmt.Sprintf("%s<p style={%s}>%s</p>\n", tabs, styleObj, content)
+		return fmt.Sprintf("%s<p%s style={%s}>%s%s</p>\n", tabs, classPrefix, styleObj, dynamicStyles, content)
 	case "form":
 		action := getString(props, "action")
 		if action == "" { action = "/api/submit" }
-		out := fmt.Sprintf("%s<form style={%s} onSubmit={(e) => handleSubmit(e, '%s')}>\n", tabs, styleObj, action)
+		out := fmt.Sprintf("%s<form%s style={%s} onSubmit={(e) => handleSubmit(e, '%s')}>\n%s", tabs, classPrefix, styleObj, action, dynamicStyles)
 		for _, child := range children {
 			out += renderNode(child, indent+1)
 		}
@@ -217,17 +265,42 @@ func renderNode(node map[string]any, indent int) string {
 		name := getString(props, "name")
 		if name == "" { name = fmt.Sprintf("input_%d", len(content)) }
 		placeholder := getString(props, "placeholder")
-		inputType := getString(props, "type") // Builder uses type: 'email', 'password' under properties
+		inputType := getString(props, "type")
 		if inputType == "" { 
 			if nodeType == "email_input" { inputType = "email" } else if nodeType == "password_input" { inputType = "password" } else { inputType = "text" }
 		}
-		return fmt.Sprintf("%s<input type='%s' name='%s' placeholder='%s' style={%s} />\n", tabs, inputType, name, placeholder, styleObj)
+		return fmt.Sprintf("%s<input%s type='%s' name='%s' placeholder='%s' style={%s} />\n%s", tabs, classPrefix, inputType, name, placeholder, styleObj, dynamicStyles)
+	case "select":
+		name := getString(props, "name")
+		options := getList(props, "options")
+		var optsStr strings.Builder
+		for _, opt := range options {
+			optsStr.WriteString(fmt.Sprintf("\n%s\t<option value=\"%s\">%s</option>", tabs, getString(opt, "value"), getString(opt, "label")))
+		}
+		return fmt.Sprintf("%s<select%s name=\"%s\" style={%s}>%s%s\n%s</select>\n", tabs, classPrefix, name, styleObj, dynamicStyles, optsStr.String(), tabs)
+	case "checkbox", "radio":
+		options := getList(props, "options")
+		name := getString(props, "name")
+		var optsStr strings.Builder
+		for i, opt := range options {
+			optsStr.WriteString(fmt.Sprintf("\n%s\t<label key=\"%d\" className=\"flex items-center gap-2\"><input type=\"%s\" name=\"%s\" value=\"%s\" /> %s</label>", tabs, i, nodeType, name, getString(opt, "value"), getString(opt, "label")))
+		}
+		return fmt.Sprintf("%s<fieldset%s style={%s}>%s%s\n%s</fieldset>\n", tabs, classPrefix, styleObj, dynamicStyles, optsStr.String(), tabs)
+	case "video_embed":
+		src := getString(props, "src")
+		return fmt.Sprintf("%s<iframe%s src=\"%s\" style={%s}>%s</iframe>\n", tabs, classPrefix, src, styleObj, dynamicStyles)
+	case "image", "logo":
+		src := getString(props, "src")
+		alt := getString(props, "alt")
+		return fmt.Sprintf("%s<img%s src=\"%s\" alt=\"%s\" style={%s} />\n%s", tabs, classPrefix, src, alt, styleObj, dynamicStyles)
+	case "divider":
+		return fmt.Sprintf("%s<hr%s style={%s} />\n%s", tabs, classPrefix, styleObj, dynamicStyles)
 	case "button", "submit_button":
 		buttonType := "button"
 		if nodeType == "submit_button" || getString(props, "action") == "submit" { buttonType = "submit" }
-		return fmt.Sprintf("%s<button type='%s' style={%s}>%s</button>\n", tabs, buttonType, styleObj, content)
+		return fmt.Sprintf("%s<button%s type='%s' style={%s}>%s%s</button>\n", tabs, classPrefix, buttonType, styleObj, dynamicStyles, content)
 	default: // fallback to div
-		out := fmt.Sprintf("%s<div style={%s}>\n", tabs, styleObj)
+		out := fmt.Sprintf("%s<div%s style={%s}>\n%s", tabs, classPrefix, styleObj, dynamicStyles)
 		if content != "" {
 			out += fmt.Sprintf("%s\t%s\n", tabs, content)
 		}
@@ -248,6 +321,15 @@ func getMap(m map[string]any, key string) map[string]any {
 	if val, ok := m[key].(map[string]any); ok { return val }
 	return make(map[string]any)
 }
+func getMapObj(m map[string]any, key string) map[string]string {
+	res := make(map[string]string)
+	if val, ok := m[key].(map[string]any); ok {
+		for k, v := range val {
+			res[k] = fmt.Sprintf("%v", v)
+		}
+	}
+	return res
+}
 func getList(m map[string]any, key string) []map[string]any {
 	var res []map[string]any
 	if val, ok := m[key].([]any); ok {
@@ -259,3 +341,18 @@ func getList(m map[string]any, key string) []map[string]any {
 	}
 	return res
 }
+func toCSSKebab(camel string) string {
+	var sb strings.Builder
+	for i, c := range camel {
+		if c >= 'A' && c <= 'Z' {
+			if i > 0 {
+				sb.WriteRune('-')
+			}
+			sb.WriteRune(c + 32)
+		} else {
+			sb.WriteRune(c)
+		}
+	}
+	return sb.String()
+}
+

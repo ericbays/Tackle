@@ -20,10 +20,10 @@ export default function SMTPProfileEditor() {
         description: '',
         host: '',
         port: 587,
-        auth_type: 'LOGIN',
+        auth_type: 'login',
         username: '',
         password: '',
-        tls_mode: 'STARTTLS',
+        tls_mode: 'starttls',
         tls_skip_verify: false,
         from_address: '',
         from_name: '',
@@ -174,9 +174,9 @@ export default function SMTPProfileEditor() {
                                 onChange={e => setFormData({ ...formData, tls_mode: e.target.value })}
                                 className="w-full bg-slate-800/50 border border-slate-700 rounded-md px-4 py-2 text-white focus:outline-none focus:border-blue-500"
                             >
-                                <option value="NONE">None</option>
-                                <option value="STARTTLS">STARTTLS (Usually Port 587)</option>
-                                <option value="TLS">Implicit TLS (Usually Port 465)</option>
+                                <option value="none">None</option>
+                                <option value="starttls">STARTTLS (Usually Port 587)</option>
+                                <option value="tls">Implicit TLS (Usually Port 465)</option>
                             </Select>
                         </div>
                         <div className="col-span-2 sm:col-span-1 flex items-center pt-6">
@@ -207,13 +207,13 @@ export default function SMTPProfileEditor() {
                                 onChange={e => setFormData({ ...formData, auth_type: e.target.value })}
                                 className="w-full bg-slate-800/50 border border-slate-700 rounded-md px-4 py-2 text-white focus:outline-none focus:border-blue-500"
                             >
-                                <option value="NONE">None (IP Allowlisted)</option>
-                                <option value="LOGIN">LOGIN</option>
-                                <option value="PLAIN">PLAIN</option>
-                                <option value="CRAM-MD5">CRAM-MD5</option>
+                                <option value="none">None (IP Allowlisted)</option>
+                                <option value="login">LOGIN</option>
+                                <option value="plain">PLAIN</option>
+                                <option value="cram_md5">CRAM-MD5</option>
                             </Select>
                         </div>
-                        {formData.auth_type !== 'NONE' && (
+                        {formData.auth_type !== 'none' && (
                             <>
                                 <div className="col-span-2 sm:col-span-1">
                                     <label className="block text-sm font-medium text-slate-400 mb-1">Username</label>

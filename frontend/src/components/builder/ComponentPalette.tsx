@@ -1,6 +1,6 @@
 import { type ComponentType } from '../../types/builder';
 import { useBuilderStore } from '../../store/builderStore';
-import { Type, Square, Layout, List, FormInput, MousePointerClick, Image as ImageIcon } from 'lucide-react';
+import { Type, Square, Layout, List, FormInput, MousePointerClick, Image as ImageIcon, Video, Navigation, Layers, CheckSquare, ListOrdered, PanelTop, PanelBottom, Baseline } from 'lucide-react';
 
 interface PaletteItemProps {
     type: ComponentType;
@@ -10,12 +10,14 @@ interface PaletteItemProps {
 
 const PALETTE_GROUPS: { name: string, items: PaletteItemProps[] }[] = [
     {
-        name: 'Layout',
+        name: 'Layout & Navigation',
         items: [
             { type: 'container', label: 'Container', icon: <Square className="w-5 h-5" /> },
             { type: 'row', label: 'Row', icon: <Layout className="w-5 h-5" /> },
             { type: 'column', label: 'Column', icon: <List className="w-5 h-5" /> },
-            { type: 'divider', label: 'Divider', icon: <List className="w-5 h-5" /> },
+            { type: 'divider', label: 'Divider', icon: <Baseline className="w-5 h-5" /> },
+            { type: 'navbar', label: 'Navbar', icon: <PanelTop className="w-5 h-5" /> },
+            { type: 'footer', label: 'Footer', icon: <PanelBottom className="w-5 h-5" /> },
         ]
     },
     {
@@ -24,14 +26,28 @@ const PALETTE_GROUPS: { name: string, items: PaletteItemProps[] }[] = [
             { type: 'heading', label: 'Heading', icon: <Type className="w-5 h-5" /> },
             { type: 'paragraph', label: 'Paragraph', icon: <Type className="w-5 h-5" /> },
             { type: 'image', label: 'Image', icon: <ImageIcon className="w-5 h-5" /> },
+            { type: 'video_embed', label: 'Video', icon: <Video className="w-5 h-5" /> },
+        ]
+    },
+    {
+        name: 'Interactions',
+        items: [
+            { type: 'button', label: 'Button', icon: <MousePointerClick className="w-5 h-5" /> },
+            { type: 'accordion', label: 'Accordion', icon: <Layers className="w-5 h-5" /> },
+            { type: 'tabs', label: 'Tabs', icon: <Navigation className="w-5 h-5" /> },
         ]
     },
     {
         name: 'Forms',
         items: [
-            { type: 'form', label: 'Form', icon: <FormInput className="w-5 h-5" /> },
-            { type: 'text_input', label: 'Input', icon: <FormInput className="w-5 h-5" /> },
-            { type: 'submit_button', label: 'Button', icon: <MousePointerClick className="w-5 h-5" /> },
+            { type: 'form', label: 'Form Base', icon: <FormInput className="w-5 h-5" /> },
+            { type: 'text_input', label: 'Text Input', icon: <FormInput className="w-5 h-5" /> },
+            { type: 'email_input', label: 'Email', icon: <FormInput className="w-5 h-5" /> },
+            { type: 'password_input', label: 'Password', icon: <FormInput className="w-5 h-5" /> },
+            { type: 'select', label: 'Dropdown', icon: <ListOrdered className="w-5 h-5" /> },
+            { type: 'checkbox', label: 'Checkbox', icon: <CheckSquare className="w-5 h-5" /> },
+            { type: 'radio', label: 'Radio', icon: <CheckSquare className="w-5 h-5" /> },
+            { type: 'submit_button', label: 'Submit', icon: <MousePointerClick className="w-5 h-5" /> },
         ]
     }
 ];

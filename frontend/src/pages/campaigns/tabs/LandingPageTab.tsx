@@ -17,7 +17,10 @@ export default function LandingPageTab() {
                         <LayoutTemplate className="w-5 h-5 text-purple-400" />
                         <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-500">Landing Page Assignment</h2>
                     </div>
-                    <Link to="/builder" className="text-sm bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-md transition-colors flex items-center gap-2">
+                    <Link 
+                        to={selectedPage ? `/builder/${selectedPage}` : `#`} 
+                        className={`text-sm px-3 py-1.5 rounded-md transition-colors flex items-center gap-2 ${selectedPage ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-slate-800/50 text-slate-500 cursor-not-allowed pointer-events-none'}`}
+                    >
                         <ExternalLink className="w-4 h-4" /> Open Builder
                     </Link>
                 </div>
@@ -31,7 +34,7 @@ export default function LandingPageTab() {
                         <div className="col-span-2 text-amber-500 text-sm bg-amber-950/20 border border-amber-900/50 rounded-lg p-6 flex flex-col items-center justify-center">
                              <AlertCircle className="w-8 h-8 mb-3 text-amber-500/80" />
                              <p>No landing applications found.</p>
-                             <Link to="/builder" className="text-blue-400 hover:underline mt-2">Create your first landing application</Link>
+                             <Link to="/landing-pages" className="text-blue-400 hover:underline mt-2">Create your first landing application</Link>
                          </div>
                     ) : (
                         landingPages.map(page => (

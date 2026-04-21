@@ -149,6 +149,20 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ node }) => {
         case 'row':
             baseClassName = 'w-full flex flex-row items-start flex-wrap';
             break;
+        case 'navbar':
+            ComponentTag = 'nav';
+            baseClassName = 'w-full flex flex-row items-center justify-between border-b border-slate-200';
+            break;
+        case 'footer':
+            ComponentTag = 'footer';
+            baseClassName = 'w-full flex flex-col items-center justify-center border-t border-slate-200';
+            break;
+        case 'tabs':
+            baseClassName = 'w-full flex flex-col border border-slate-200 rounded';
+            break;
+        case 'accordion':
+            baseClassName = 'w-full flex flex-col border border-slate-200 rounded divide-y divide-slate-200';
+            break;
         case 'form':
             ComponentTag = 'form';
             baseClassName = 'w-full flex flex-col bg-white rounded-xl shadow-sm border border-slate-200';
@@ -157,11 +171,24 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ node }) => {
             ComponentTag = 'img';
             baseClassName = 'max-w-full h-auto rounded';
             break;
+        case 'video_embed':
+            ComponentTag = 'iframe';
+            baseClassName = 'w-full aspect-video rounded border-0';
+            break;
         case 'text_input':
         case 'email_input':
         case 'password_input':
             ComponentTag = 'input';
             baseClassName = 'border border-slate-300 rounded-lg px-4 py-2.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 placeholder:text-slate-400 bg-slate-50 pointer-events-none';
+            break;
+        case 'select':
+            ComponentTag = 'select';
+            baseClassName = 'border border-slate-300 rounded-lg px-4 py-2.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 bg-slate-50';
+            break;
+        case 'checkbox':
+        case 'radio':
+            ComponentTag = 'fieldset';
+            baseClassName = 'flex flex-col gap-2';
             break;
         default:
             baseClassName = 'flex flex-col';
@@ -201,9 +228,31 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ node }) => {
         opacity: activeNativeDragItem?.id === node.component_id ? 0.4 : 1,
     };
 
+    builderClasses += ` node-${node.component_id} `;
+
+    const DynamicStyles = () => {
+        if (!node.properties?.hover_style && !node.properties?.active_style) return null;
+        let cssString = '';
+        
+        if (node.properties?.hover_style && Object.keys(node.properties.hover_style).length > 0) {
+            const hoverEntries = Object.entries(node.properties.hover_style).map(([k, v]) => `${k.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${v} !important;`).join(' ');
+            cssString += `.node-${node.component_id}:hover { ${hoverEntries} } `;
+        }
+
+        if (node.properties?.active_style && Object.keys(node.properties.active_style).length > 0) {
+            const activeEntries = Object.entries(node.properties.active_style).map(([k, v]) => `${k.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${v} !important;`).join(' ');
+            cssString += `.node-${node.component_id}:active { ${activeEntries} } `;
+        }
+
+        return <style dangerouslySetInnerHTML={{ __html: cssString }} />;
+    };
+
     const isImage = node.type === 'image' || node.type === 'logo';
+    const isVideo = node.type === 'video_embed';
     const isInput = ComponentTag === 'input';
-    const isVoidElement = isImage || isInput;
+    const isSelect = node.type === 'select';
+    const isButton = node.type === 'button' || node.type === 'submit_button';
+    const isVoidElement = isImage || isInput || isVideo || isSelect || isButton;
 
     const propsWithText = {
         ...node.properties,
@@ -214,9 +263,34 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ node }) => {
         })
     };
 
-    const innerContent = ['heading', 'paragraph', 'text', 'button', 'submit_button'].includes(node.type)
-        ? node.properties?.text || node.type
-        : null;
+    let innerContent: React.ReactNode = null;
+    if (['heading', 'paragraph', 'text'].includes(node.type)) {
+        innerContent = node.properties?.text || node.type;
+    } else if (node.type === 'checkbox' || node.type === 'radio') {
+        innerContent = (node.properties?.options || []).map((opt: any, i: number) => (
+            <label key={i} className="flex items-center gap-2 text-sm text-slate-700">
+                <input type={node.type} name={node.properties?.name || ''} value={opt.value} readOnly />
+                {opt.label}
+            </label>
+        ));
+    } else if (node.type === 'tabs') {
+        innerContent = (
+            <div className="w-full flex border-b border-slate-200">
+                {(node.properties?.options || []).map((opt: any, i: number) => (
+                    <div key={i} className={`py-2 px-4 text-sm font-medium border-b-2 ${i === 0 ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-500'}`}>
+                        {opt.label}
+                    </div>
+                ))}
+            </div>
+        );
+    } else if (node.type === 'accordion') {
+        innerContent = (node.properties?.options || []).map((opt: any, i: number) => (
+            <div key={i} className="w-full p-3 flex justify-between items-center text-sm font-medium text-slate-700 bg-slate-50">
+                {opt.label}
+                <span className="text-slate-400">+</span>
+            </div>
+        ));
+    }
 
     const Badge = () => {
         if (isRoot) return null;
@@ -249,15 +323,25 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ node }) => {
                 onDrop={handleDrop}
                 style={{ position: 'relative', opacity: combinedStyle.opacity, width: combinedStyle.width || '100%', flex: combinedStyle.flex }}
             >
+                <DynamicStyles />
                 <Badge />
-                {isImage ? (
+                {isImage && (
                     <img
                         src={node.properties?.src || 'https://placehold.co/600x400/e2e8f0/64748b?text=Placeholder+Image'}
                         alt={node.properties?.alt || 'Placeholder'}
                         className={`w-full h-full ${baseClassName}`}
                         style={combinedStyle}
                     />
-                ) : (
+                )}
+                {isVideo && (
+                    <iframe 
+                        src={node.properties?.src || 'https://www.youtube.com/embed/dQw4w9WgXcQ'}
+                        className={`w-full h-full pointer-events-none ${baseClassName}`}
+                        style={combinedStyle}
+                        title="Video"
+                    />
+                )}
+                {isInput && (
                     <input
                         type={node.type === 'email_input' ? 'email' : node.type === 'password_input' ? 'password' : 'text'}
                         placeholder={node.properties?.placeholder || 'Enter text...'}
@@ -265,6 +349,24 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ node }) => {
                         style={combinedStyle}
                         readOnly
                     />
+                )}
+                {isSelect && (
+                    <select
+                        className={`w-full h-full ${baseClassName} pointer-events-none`}
+                        style={combinedStyle}
+                    >
+                        {(node.properties?.options || []).map((opt: any, i: number) => (
+                            <option key={i} value={opt.value}>{opt.label}</option>
+                        ))}
+                    </select>
+                )}
+                {isButton && (
+                    <button
+                        className={`w-full h-full ${baseClassName} pointer-events-none`}
+                        style={combinedStyle}
+                    >
+                        {node.properties?.text || node.properties?.content || node.type}
+                    </button>
                 )}
             </div>
         );
@@ -281,6 +383,7 @@ export const RenderNode: React.FC<RenderNodeProps> = ({ node }) => {
             onDragOver={handleDragOver}
             onDrop={handleDrop}
         >
+            <DynamicStyles />
             <Badge />
             {innerContent}
             {isContainer && node.children?.map(child => (

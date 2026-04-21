@@ -34,6 +34,9 @@ export interface ComponentNode {
       level?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
       href?: string;
       style?: StyleProperties;
+      hover_style?: StyleProperties;
+      active_style?: StyleProperties;
+      options?: { label: string; value: string }[];
       [key: string]: any;
   };
   

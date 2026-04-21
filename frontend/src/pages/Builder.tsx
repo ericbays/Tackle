@@ -258,11 +258,10 @@ export default function Builder() {
   };
 
   const executePreview = async (projectId: string) => {
-      setDevServerStatus('starting');
       toast.loading('Starting Development Deployment...', { id: 'dev-deploy' });
       try {
-          // Fire and forget; the polling useEffect handles UX transitions
           await api.post(`/landing-pages/${projectId}/dev-server/start`);
+          setDevServerStatus('starting');
       } catch (err) {
           console.error(err);
           setDevServerStatus('offline');

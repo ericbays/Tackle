@@ -37,6 +37,7 @@ interface BuilderState {
   // Page & Definition Mutations
   updatePage: (pageId: string, updates: Partial<PageNode>) => void;
   updateNavigation: (navigation: any[]) => void;
+  updateGlobalStyles: (global_styles: string) => void;
   
   // History Control
   undo: () => void;
@@ -72,6 +73,14 @@ const getDefaultProps = (type: ComponentType) => {
     case 'text_input': return { placeholder: 'Enter text...' };
     case 'email_input': return { placeholder: 'Enter email...' };
     case 'password_input': return { placeholder: 'Enter password...' };
+    case 'video_embed': return { src: 'https://www.youtube.com/embed/dQw4w9WgXcQ' };
+    case 'select': return { options: [{label: 'Option 1', value: 'opt1'}, {label: 'Option 2', value: 'opt2'}], placeholder: 'Select an option' };
+    case 'checkbox': return { options: [{label: 'Checkbox 1', value: 'chk1'}] };
+    case 'radio': return { options: [{label: 'Radio 1', value: 'rad1'}, {label: 'Radio 2', value: 'rad2'}], name: 'radio_group' };
+    case 'navbar': return { style: { padding: '20px', minHeight: '60px', display: 'flex', justifyContent: 'space-between', backgroundColor: '#f8fafc' } };
+    case 'footer': return { style: { padding: '40px 20px', minHeight: '100px', display: 'flex', flexDirection: 'column', backgroundColor: '#0f172a', color: '#ffffff' } };
+    case 'tabs': return { options: [{label: 'Tab 1', value: 'tab1'}, {label: 'Tab 2', value: 'tab2'}] };
+    case 'accordion': return { options: [{label: 'Item 1', value: 'item1'}, {label: 'Item 2', value: 'item2'}] };
     case 'container': return { style: { padding: '20px', minHeight: '50px' } };
     default: return {};
   }
@@ -196,6 +205,14 @@ export const useBuilderStore = create<BuilderState>((set) => {
     const newProject = { 
         ...state.project, 
         definition_json: { ...state.project.definition_json, navigation }
+    };
+    return pushHistory(state, newProject);
+  }),
+  updateGlobalStyles: (global_styles) => set((state) => {
+    if (!state.project) return state;
+    const newProject = { 
+        ...state.project, 
+        definition_json: { ...state.project.definition_json, global_styles }
     };
     return pushHistory(state, newProject);
   }),

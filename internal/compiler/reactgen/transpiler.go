@@ -63,60 +63,146 @@ func walkNode(node Node, indentLevel int) string {
 		node.Styles = parseInlineStyleToMap(inline)
 	}
 
+	// Safely pull modern builder styles from node.Properties
+	if len(node.Styles) == 0 {
+		node.Styles = parseStyleProp(node.Properties, "style")
+	}
+
+	hoverStyles := parseStyleProp(node.Properties, "hover_style")
+	activeStyles := parseStyleProp(node.Properties, "active_style")
+
 	// Convert arbitrary style maps into stealth CSS-in-JS properties for maximum evasion
 	styleStr := generateCSSinJS(node.Styles)
 
+	var dynamicStyles string
+	if len(hoverStyles) > 0 || len(activeStyles) > 0 {
+		var sb strings.Builder
+		if len(hoverStyles) > 0 {
+			sb.WriteString(fmt.Sprintf(".node-%s:hover { ", node.ID))
+			for k, v := range hoverStyles {
+				sb.WriteString(fmt.Sprintf("%s: %s !important; ", toCSSKebab(k), v))
+			}
+			sb.WriteString("} ")
+		}
+		if len(activeStyles) > 0 {
+			sb.WriteString(fmt.Sprintf(".node-%s:active { ", node.ID))
+			for k, v := range activeStyles {
+				sb.WriteString(fmt.Sprintf("%s: %s !important; ", toCSSKebab(k), v))
+			}
+			sb.WriteString("} ")
+		}
+		dynamicStyles = fmt.Sprintf("\n%s<style dangerouslySetInnerHTML={{ __html: `%s` }} />\n", indent+"  ", sb.String())
+	}
+
 	// Specific Node Transpilation logic
 	switch node.Type {
-	case "row", "column", "container", "root":
-		return fmt.Sprintf("%s<div id=\"%s\" style={%s}>\n%s\n%s</div>",
-			indent, node.ID, styleStr, walkChildren(node.Children, indentLevel+1), indent)
+	case "row", "column", "container", "root", "tabs", "accordion":
+		return fmt.Sprintf("%s<div id=\"%s\" className=\"node-%s\" style={%s}>%s\n%s\n%s</div>",
+			indent, node.ID, node.ID, styleStr, dynamicStyles, walkChildren(node.Children, indentLevel+1), indent)
+
+	case "navbar":
+		return fmt.Sprintf("%s<nav id=\"%s\" className=\"node-%s\" style={%s}>%s\n%s\n%s</nav>",
+			indent, node.ID, node.ID, styleStr, dynamicStyles, walkChildren(node.Children, indentLevel+1), indent)
+
+	case "footer":
+		return fmt.Sprintf("%s<footer id=\"%s\" className=\"node-%s\" style={%s}>%s\n%s\n%s</footer>",
+			indent, node.ID, node.ID, styleStr, dynamicStyles, walkChildren(node.Children, indentLevel+1), indent)
 
 	case "heading":
-		content := getStringProp(node.Properties, "content")
+		content := getStringProp(node.Properties, "text") // Updated to match latest UI builder
+		if content == "" {
+			content = getStringProp(node.Properties, "content") // fallback
+		}
 		level := getStringProp(node.Properties, "level")
 		if level == "" {
 			level = "h2"
 		} else if !strings.HasPrefix(level, "h") {
 			level = "h" + level
 		}
-		return fmt.Sprintf("%s<%s id=\"%s\" style={%s}>%s</%s>",
-			indent, level, node.ID, styleStr, content, level)
+		return fmt.Sprintf("%s<%s id=\"%s\" className=\"node-%s\" style={%s}>%s%s</%s>",
+			indent, level, node.ID, node.ID, styleStr, dynamicStyles, content, level)
 
 	case "text", "paragraph":
-		content := getStringProp(node.Properties, "content")
-		return fmt.Sprintf("%s<p id=\"%s\" style={%s}>%s</p>",
-			indent, node.ID, styleStr, content)
+		content := getStringProp(node.Properties, "text")
+		if content == "" {
+			content = getStringProp(node.Properties, "content")
+		}
+		return fmt.Sprintf("%s<p id=\"%s\" className=\"node-%s\" style={%s}>%s%s</p>",
+			indent, node.ID, node.ID, styleStr, dynamicStyles, content)
 
-	case "button":
-		content := getStringProp(node.Properties, "content")
-		return fmt.Sprintf("%s<button id=\"%s\" type=\"button\" style={%s}>%s</button>",
-			indent, node.ID, styleStr, content)
+	case "button", "submit_button":
+		content := getStringProp(node.Properties, "text")
+		if content == "" {
+			content = getStringProp(node.Properties, "content")
+		}
+		bType := "button"
+		if node.Type == "submit_button" {
+			bType = "submit"
+		}
+		return fmt.Sprintf("%s<button id=\"%s\" className=\"node-%s\" type=\"%s\" style={%s}>%s%s</button>",
+			indent, node.ID, node.ID, bType, styleStr, dynamicStyles, content)
 
 	case "form":
 		actionRoute := getStringProp(node.Properties, "actionRoute")
 		if actionRoute == "" {
 			actionRoute = "/api/v1/session/renew"
 		}
-		return fmt.Sprintf("%s<form id=\"%s\" style={%s} action=\"%s\" method=\"POST\">\n%s\n%s</form>",
-			indent, node.ID, styleStr, actionRoute, walkChildren(node.Children, indentLevel+1), indent)
+		return fmt.Sprintf("%s<form id=\"%s\" className=\"node-%s\" style={%s} action=\"%s\" method=\"POST\">%s\n%s\n%s</form>",
+			indent, node.ID, node.ID, styleStr, actionRoute, dynamicStyles, walkChildren(node.Children, indentLevel+1), indent)
 
-	case "input":
-		inputType := getStringProp(node.Properties, "inputType")
-		if inputType == "" {
-			inputType = "text"
+	case "text_input", "email_input", "password_input", "input":
+		inputType := "text"
+		if node.Type == "email_input" {
+			inputType = "email"
+		} else if node.Type == "password_input" {
+			inputType = "password"
 		}
 		name := getStringProp(node.Properties, "name")
 		placeholder := getStringProp(node.Properties, "placeholder")
-		return fmt.Sprintf("%s<input id=\"%s\" type=\"%s\" name=\"%s\" placeholder=\"%s\" style={%s} />",
-			indent, node.ID, inputType, name, placeholder, styleStr)
+		labelStr := ""
+		if label := getStringProp(node.Properties, "label_text"); label != "" {
+			labelStr = fmt.Sprintf("\n%s  <label className=\"block text-sm font-medium mb-1\">%s</label>", indent, label)
+		}
+		return fmt.Sprintf("%s<div className=\"node-%s\" style={%s}>%s%s\n%s  <input id=\"%s\" type=\"%s\" name=\"%s\" placeholder=\"%s\" className=\"w-full\" />\n%s</div>",
+			indent, node.ID, styleStr, dynamicStyles, labelStr, indent, node.ID, inputType, name, placeholder, indent)
+
+	case "select":
+		options := getOptionsProp(node.Properties)
+		var optsStr strings.Builder
+		for _, opt := range options {
+			optsStr.WriteString(fmt.Sprintf("\n%s  <option value=\"%s\">%s</option>", indent, opt["value"], opt["label"]))
+		}
+		name := getStringProp(node.Properties, "name")
+		return fmt.Sprintf("%s<select id=\"%s\" name=\"%s\" className=\"node-%s\" style={%s}>%s%s\n%s</select>",
+			indent, node.ID, name, node.ID, styleStr, dynamicStyles, optsStr.String(), indent)
+
+	case "checkbox", "radio":
+		options := getOptionsProp(node.Properties)
+		name := getStringProp(node.Properties, "name")
+		var optsStr strings.Builder
+		for i, opt := range options {
+			optsStr.WriteString(fmt.Sprintf("\n%s  <label key=\"%d\" className=\"flex items-center gap-2\"><input type=\"%s\" name=\"%s\" value=\"%s\" /> %s</label>", indent, i, node.Type, name, opt["value"], opt["label"]))
+		}
+		return fmt.Sprintf("%s<fieldset id=\"%s\" className=\"node-%s\" style={%s}>%s%s\n%s</fieldset>",
+			indent, node.ID, node.ID, styleStr, dynamicStyles, optsStr.String(), indent)
+
+	case "video_embed":
+		src := getStringProp(node.Properties, "src")
+		return fmt.Sprintf("%s<iframe id=\"%s\" className=\"node-%s\" src=\"%s\" style={%s}>%s</iframe>",
+			indent, node.ID, node.ID, src, styleStr, dynamicStyles)
+
+	case "image", "logo":
+		src := getStringProp(node.Properties, "src")
+		alt := getStringProp(node.Properties, "alt")
+		return fmt.Sprintf("%s<img id=\"%s\" className=\"node-%s\" src=\"%s\" alt=\"%s\" style={%s} />%s",
+			indent, node.ID, node.ID, src, alt, styleStr, dynamicStyles)
 
 	case "divider":
-		return fmt.Sprintf("%s<hr id=\"%s\" style={%s} />", indent, node.ID, styleStr)
+		return fmt.Sprintf("%s<hr id=\"%s\" className=\"node-%s\" style={%s} />%s", indent, node.ID, node.ID, styleStr, dynamicStyles)
 
 	default:
-		return fmt.Sprintf("%s<div id=\"%s\" style={%s}>\n%s\n%s</div>",
-			indent, node.ID, styleStr, walkChildren(node.Children, indentLevel+1), indent)
+		return fmt.Sprintf("%s<div id=\"%s\" className=\"node-%s\" style={%s}>%s\n%s\n%s</div>",
+			indent, node.ID, node.ID, styleStr, dynamicStyles, walkChildren(node.Children, indentLevel+1), indent)
 	}
 }
 
@@ -130,6 +216,50 @@ func getStringProp(m map[string]any, key string) string {
 		}
 	}
 	return ""
+}
+
+func parseStyleProp(m map[string]any, key string) map[string]string {
+	res := make(map[string]string)
+	if val, ok := m[key]; ok {
+		if rawMap, ok := val.(map[string]any); ok {
+			for k, v := range rawMap {
+				res[k] = fmt.Sprintf("%v", v)
+			}
+		}
+	}
+	return res
+}
+
+func getOptionsProp(m map[string]any) []map[string]string {
+	var result []map[string]string
+	if val, ok := m["options"]; ok {
+		if arr, ok := val.([]any); ok {
+			for _, item := range arr {
+				if obj, ok := item.(map[string]any); ok {
+					opt := make(map[string]string)
+					opt["label"] = getStringProp(obj, "label")
+					opt["value"] = getStringProp(obj, "value")
+					result = append(result, opt)
+				}
+			}
+		}
+	}
+	return result
+}
+
+func toCSSKebab(camel string) string {
+	var sb strings.Builder
+	for i, c := range camel {
+		if c >= 'A' && c <= 'Z' {
+			if i > 0 {
+				sb.WriteRune('-')
+			}
+			sb.WriteRune(c + 32)
+		} else {
+			sb.WriteRune(c)
+		}
+	}
+	return sb.String()
 }
 
 func walkChildren(children []Node, indentLevel int) string {

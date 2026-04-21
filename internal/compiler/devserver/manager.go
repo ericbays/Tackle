@@ -2,6 +2,7 @@ package devserver
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"sync"
 	"time"
@@ -44,7 +45,7 @@ func GetManager() *DevServerManager {
 
 // StartDevServer executes the compiled artifact without allocating ports.
 // The child process is expected to POST /api/v1/internal/dev-server/register once it boots.
-func (m *DevServerManager) StartDevServer(projectID string, buildPath string) error {
+func (m *DevServerManager) StartDevServer(projectID string, buildPath string, buildDir string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -55,7 +56,12 @@ func (m *DevServerManager) StartDevServer(projectID string, buildPath string) er
 	}
 
 	cmd := exec.Command(buildPath)
+	cmd.Dir = buildDir
 	cmd.Env = append(cmd.Environ(), "ENV=development")
+	
+	logFile, _ := os.Create(buildDir + "/dev-stderr.log")
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
 
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to spawn dev server: %w", err)

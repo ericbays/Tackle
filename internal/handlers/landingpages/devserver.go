@@ -50,7 +50,7 @@ func (d *Deps) StartDevServer(w http.ResponseWriter, r *http.Request) {
 	_, err = servergen.GenerateWorkspace(tmpDir, campaignID, "dev-build", project.DefinitionJSON, true)
 	if err != nil {
 		fmt.Println("!!!! SERVERGEN FAILED !!!!", err.Error())
-		os.WriteFile("compiler-error.txt", []byte("SERVERGEN FAILED: "+err.Error()), 0644)
+		os.WriteFile(filepath.Join(tmpDir, "compiler-error.txt"), []byte("SERVERGEN FAILED: "+err.Error()), 0644)
 		response.Error(w, "INTERNAL_ERROR", "Servergen failed: "+err.Error(), http.StatusInternalServerError, correlationID)
 		return
 	}
@@ -66,12 +66,12 @@ func (d *Deps) StartDevServer(w http.ResponseWriter, r *http.Request) {
 	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		fmt.Println("!!!! GO COMPILER FAILED !!!!", string(out))
-		os.WriteFile("compiler-error.txt", []byte("GO COMPILER FAILED: "+string(out)+"\nERR: "+err.Error()), 0644)
+		os.WriteFile(filepath.Join(tmpDir, "compiler-error.txt"), []byte("GO COMPILER FAILED: "+string(out)+"\nERR: "+err.Error()), 0644)
 		response.Error(w, "INTERNAL_ERROR", "Go compiler failed: "+string(out), http.StatusInternalServerError, correlationID)
 		return
 	}
 
-	err = mgr.StartDevServer(campaignID, buildPath)
+	err = mgr.StartDevServer(campaignID, buildPath, tmpDir)
 	if err != nil {
 		fmt.Println("!!!! START DEVSERVER FAILED !!!!", err.Error())
 		response.Error(w, "INTERNAL_ERROR", "Failed to start dev server: "+err.Error(), http.StatusInternalServerError, correlationID)
